@@ -24,6 +24,17 @@ public class ClassifierAgent extends Agent {
 
                 if(msg.getPerformative()== ACLMessage.REQUEST){
                     String content = msg.getContent();
+
+                    /*
+                    Current idea would be:
+                        Content is
+                            TRAIN FROM dataset GET ini_instance NUM total_instances
+                        or
+                            TEST FROM dataset GET index
+                     */
+                    /*
+
+
                     if ((content != null) && (content.indexOf("ping") != -1)){
                         myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Received PING Request from "+msg.getSender().getLocalName());
                         reply.setPerformative(ACLMessage.INFORM);
@@ -34,6 +45,7 @@ public class ClassifierAgent extends Agent {
                         reply.setPerformative(ACLMessage.REFUSE);
                         reply.setContent("( UnexpectedContent ("+content+"))");
                     }
+                    */
 
                 }
                 else {
@@ -42,6 +54,7 @@ public class ClassifierAgent extends Agent {
                     reply.setContent("( (Unexpected-act "+ACLMessage.getPerformative(msg.getPerformative())+") )");
                 }
                 send(reply);
+
             }
             else {
                 block();

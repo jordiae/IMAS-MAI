@@ -28,9 +28,12 @@ public class ClassifierAgent extends Agent {
                     /*
                     Current idea would be:
                         Content is
-                            TRAIN FROM dataset GET ini_instance NUM total_instances
+                            T_(serialized instances object)
                         or
-                            TEST FROM dataset GET index
+                            P_(serialized instances object)
+                       response:
+                            (train): Inform, content: ACK
+                            (test): Inform, content: ?(Still to define)
                      */
                     /*
 

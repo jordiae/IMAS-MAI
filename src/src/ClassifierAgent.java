@@ -6,9 +6,14 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.util.Logger;
+import weka.classifiers.Classifier;
+import weka.classifiers.trees.J48;
+import weka.core.Instances;
+import java.util.*;
+import java.io.*;
 
 public class ClassifierAgent extends Agent {
-
+    private Classifier myClassifier = null;
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
 
     private class WaitMSGAndActBehaviour extends CyclicBehaviour {
@@ -35,21 +40,39 @@ public class ClassifierAgent extends Agent {
                             (train): Inform, content: ACK
                             (test): Inform, content: ?(Still to define)
                      */
-                    /*
-
-
-                    if ((content != null) && (content.indexOf("ping") != -1)){
-                        myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Received PING Request from "+msg.getSender().getLocalName());
-                        reply.setPerformative(ACLMessage.INFORM);
-                        reply.setContent("pong");
-                    }
-                    else{
-                        myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Unexpected request ["+content+"] received from "+msg.getSender().getLocalName());
+                    if ((content == null) || ((content.charAt(0) != 'T') && (content.charAt(0) != 'T')) || (content.charAt(1) != '_')) {
                         reply.setPerformative(ACLMessage.REFUSE);
-                        reply.setContent("( UnexpectedContent ("+content+"))");
-                    }
-                    */
+                        myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Got sent badly formatted request header: ["+content+"] received from "+msg.getSender().getLocalName());
+                    } else if (content.charAt(0) == 'T') {
+                        String inst_str = content.substring(2);
+                        try {
+                            Instances data = Transformer.toInst(content.substring(2));
+                            myClassifier = new J48();
+                            myClassifier.buildClassifier(data);
+                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" trained classifier as per request from "+msg.getSender().getLocalName());
+                            reply.setPerformative(ACLMessage.INFORM);
+                            reply.setContent("Trained successfully");
+                        } catch (Exception e) {
+                            reply.setPerformative(ACLMessage.REFUSE);
+                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Got sent badly formatted Instances ["+content+"] received from "+msg.getSender().getLocalName());
+                        }
+                    } else {
+                        String inst_str = content.substring(2);
+                        try {
+                            Instances data = Transformer.toInst(content.substring(2));
+                            for(element in data){
 
+                            }
+                            myClassifier.classifyInstance()
+                            myClassifier.buildClassifier(data);
+                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" trained classifier as per request from "+msg.getSender().getLocalName());
+                            reply.setPerformative(ACLMessage.INFORM);
+                            reply.setContent("Trained successfully");
+                        } catch (Exception e) {
+                            reply.setPerformative(ACLMessage.REFUSE);
+                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Got sent badly formatted Instances ["+content+"] received from "+msg.getSender().getLocalName());
+                        }
+                    }
                 }
                 else {
                     myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Unexpected message ["+ACLMessage.getPerformative(msg.getPerformative())+"] received from "+msg.getSender().getLocalName());

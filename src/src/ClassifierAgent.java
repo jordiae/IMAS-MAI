@@ -8,6 +8,7 @@ import jade.domain.FIPAException;
 import jade.util.Logger;
 import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
+import weka.core.Instance;
 import weka.core.Instances;
 import java.util.*;
 import java.io.*;
@@ -60,14 +61,16 @@ public class ClassifierAgent extends Agent {
                         String inst_str = content.substring(2);
                         try {
                             Instances data = Transformer.toInst(content.substring(2));
-                            for(element in data){
-
+                            int numInstances = data.numInstances();
+                            Collection<Double> results = new ArrayList<Double>();
+                            for (int instIdx = 0; instIdx < numInstances; instIdx++) {
+                                Instance currInst = data.instance(instIdx);
+                                Double y = myClassifier.classifyInstance(currInst);
+                                results.add(y);
                             }
-                            myClassifier.classifyInstance()
-                            myClassifier.buildClassifier(data);
-                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" trained classifier as per request from "+msg.getSender().getLocalName());
+                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" successfully performed prediction as per request from "+msg.getSender().getLocalName());
                             reply.setPerformative(ACLMessage.INFORM);
-                            reply.setContent("Trained successfully");
+                            reply.setContentObject((Serializable) results);
                         } catch (Exception e) {
                             reply.setPerformative(ACLMessage.REFUSE);
                             myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Got sent badly formatted Instances ["+content+"] received from "+msg.getSender().getLocalName());

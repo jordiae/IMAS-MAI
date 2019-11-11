@@ -41,13 +41,13 @@ public class ClassifierAgent extends Agent {
                             (train): Inform, content: ACK
                             (test): Inform, content: ?(Still to define)
                      */
-                    if ((content == null) || ((content.charAt(0) != 'T') && (content.charAt(0) != 'T')) || (content.charAt(1) != '_')) {
+                    if ((content == null) || ((content.charAt(0) != 'T') && (content.charAt(0) != 'P')) || (content.charAt(1) != '_')) {
                         reply.setPerformative(ACLMessage.REFUSE);
                         myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Got sent badly formatted request header: ["+content+"] received from "+msg.getSender().getLocalName());
                     } else if (content.charAt(0) == 'T') {
                         String inst_str = content.substring(2);
                         try {
-                            Instances data = Transformer.toInst(content.substring(2));
+                            Instances data = Transformer.toInst(inst_str);
                             myClassifier = new J48();
                             myClassifier.buildClassifier(data);
                             myLogger.log(Logger.INFO, "Agent "+getLocalName()+" trained classifier as per request from "+msg.getSender().getLocalName());
@@ -60,7 +60,7 @@ public class ClassifierAgent extends Agent {
                     } else {
                         String inst_str = content.substring(2);
                         try {
-                            Instances data = Transformer.toInst(content.substring(2));
+                            Instances data = Transformer.toInst(inst_str);
                             int numInstances = data.numInstances();
                             Collection<Double> results = new ArrayList<Double>();
                             for (int instIdx = 0; instIdx < numInstances; instIdx++) {

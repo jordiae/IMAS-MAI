@@ -1,7 +1,10 @@
 <component name="libraryTable">
   <library name="jade">
     <CLASSES>
-      <root url="jar://$USER_HOME$/Documents/MAI/IMAS/jade.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../jade.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../log4j-1.2.17.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../weka-stable-3.6.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../weka.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

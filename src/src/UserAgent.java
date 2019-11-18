@@ -1,16 +1,25 @@
 import jade.core.*;
 import jade.core.behaviours.*;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 import jade.util.Logger;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
-
-const String CONFIG_FILE_PATH = "../config/imas.settings"
+import jade.wrapper.AgentController;
+import jade.wrapper.ContainerController;
+import jade.wrapper.StaleProxyException;
 
 public class UserAgent extends Agent {
-    private Logger logger = Logger.getMyLogger(getClass().getName());
-    private SimulationSettings simulationSettings;
+    private String CONFIG_FILE_PATH = "../config/imas.settings";
+    private Logger myLogger = Logger.getMyLogger(getClass().getName());
+    //private SimulationSettings simulationSettings;
 
     private class WaitUserInputBehaviour extends CyclicBehaviour {
 
@@ -19,11 +28,11 @@ public class UserAgent extends Agent {
         }
 
         public void action() {
-            String action = read_config_file();
-            if (action() != null) {
+            String action = read_user_input();
+            if (action != null) {
                 ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
                 msg.setContent(action);
-                msg.addReceiver(new AID("ManagerAgent", AID.ISLOCALNAME));
+                msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
                 send(msg);
             }
         }
@@ -33,7 +42,7 @@ public class UserAgent extends Agent {
         // Registration with the DF
         DFAgentDescription dfd = new DFAgentDescription();
         ServiceDescription sd = new ServiceDescription();
-        sd.setType("ClassifierAgent");
+        sd.setType("UserAgent");
         sd.setName(getName());
         sd.setOwnership("IMAS_group");
         dfd.setName(getAID());
@@ -46,6 +55,19 @@ public class UserAgent extends Agent {
             myLogger.log(Logger.SEVERE, "Agent "+getLocalName()+" - Cannot register with DF", e);
             doDelete();
         }
+
+        // Dynamic creation of the Manager Agent
+        ContainerController cc = getContainerController();
+        try {
+            AgentController ac = cc.createNewAgent("manager", "ManagerAgent", null);
+            try {
+                ac.start();
+            } catch (StaleProxyException e) {
+                e.printStackTrace();
+            }
+        } catch (StaleProxyException e) {
+            e.printStackTrace();
+        }
     }
 
     protected void takeDown() {
@@ -53,28 +75,37 @@ public class UserAgent extends Agent {
         //Close any open/required resources
     }
 
-    protected string read_user_input() {
+    protected String read_user_input() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        String action = reader.readLine();
-        if(action == "T") {
-            //read_config_file();
-            //TO-DO: return also the content of the configuration file
-            return "T";
-        }
-        else if (action == "P") {
-            return "P";
-        }
+        try {
+            String action = reader.readLine();
+            if(action.equals("T")) {
+                //read_config_file();
+                //TO-DO: return also the content of the configuration file
+                return "T";
+            }
+            else if (action.equals("P")) {
+                return "P";
+            }
 
-        else {
+            else {
+                System.out.println("Wrong action");
+                System.out.println("USAGE: T <config_file> | P");
+                return null;
+            }
+        }
+        catch (IOException e) {
             System.out.println("Wrong action");
             System.out.println("USAGE: T <config_file> | P");
+            e.printStackTrace();
             return null;
         }
     }
 
-    protected void read_config_file() {
+    /*protected void read_config_file() {
         JAXBContext jaxbContext = JAXBContext.newInstance(SimulationSettings.class);
         Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
         Customer customer = (Customer) jaxbUnmarshaller.unmarshal(new File(CONFIG_FILE_PATH));
-    }
+        return null;
+    }*/
 }

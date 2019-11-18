@@ -14,7 +14,7 @@ import java.io.*;
 
 
 
-public class Manager extends Agent {
+public class ManagerAgent extends Agent {
 
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
 
@@ -31,6 +31,7 @@ public class Manager extends Agent {
 
                 if (msg.getPerformative() == ACLMessage.REQUEST) {
                     String content = msg.getContent();
+                    System.out.println(content);
                     if ((content == null) || ((content.charAt(0) != 'T') && (content.charAt(0) != 'P')) || (content.charAt(1) != '_')) {
                         reply.setPerformative(ACLMessage.REFUSE);
                         myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Got sent badly formatted request header: ["+content+"] received from "+msg.getSender().getLocalName());

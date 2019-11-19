@@ -1,0 +1,11 @@
+# IMAS-MAI
+## Introduction to Multiagent Systems project (Master in Artificial Intelligence)
+### Instructions for executing our system
+1. Compile the agents:  
+```javac -classpath lib\jade.jar -d classes src\src\ManagerAgent.java src\src\UserAgent.java```
+
+2. Execute Jade with User Agent (the rest will be created dynamically):  
+```java -cp lib\jade.jar;classes jade.Boot -gui -agents user:UserAgent```
+
+3. Use the command line to train or predict:  
+```USAGE: T <config_file> | P```

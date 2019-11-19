@@ -9,3 +9,14 @@
 
 3. Use the command line to train or predict:  
 ```USAGE: T <config_file> | P```
+
+
+### Instructions for executing our system from linux:
+1. Compile the agents from the folder IMAS-MAI:  
+```javac -cp lib/jade.jar:lib/weka.jar -d src/out/production/IMAS_test  src/src/*.java```
+
+2. Execute Jade with User Agent (the rest will be created dynamically):  
+```java -cp lib/jade.jar:lib/weka.jar:src/out/production/IMAS_test/ jade.Boot -gui -agents user:UserAgent```
+
+3. Use the command line to train or predict:  
+```USAGE: T <config_file> | P```

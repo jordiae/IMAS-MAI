@@ -1,0 +1,11 @@
+*.ini
+*.class
+.idea/IMAS-MAI.iml
+.idea/libraries/commons_codec_1_3.xml
+.idea/libraries/jade.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/uiDesigner.xml
+.idea/vcs.xml
+APDescription.txt
+MTPs-Main-Container.txt

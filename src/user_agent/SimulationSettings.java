@@ -1,24 +1,28 @@
-package user_agent
+package user_agent;
+
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 public class SimulationSettings {
 
-    String title;
-    String algorithm;
-    int classifiers;
-    int[] trainingSettings;
+    private String title;
+    private String algorithm;
+    private int classifiers;
+    private String trainingSettings;
+    private int classifierInstances;
+    private String file;
 
-    public int[] getTrainingSettings() {
+    public String getTrainingSettings() {
         return trainingSettings;
     }
 
     @XmlElement
-    public void setTrainingSettings(int[] trainingSettings) {
+    public void setTrainingSettings(String trainingSettings) {
         this.trainingSettings = trainingSettings;
     }
 
-    int classifierInstances;
-    String file;
 
     public String getTitle() {
         return title;

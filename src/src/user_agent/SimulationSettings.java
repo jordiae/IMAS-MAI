@@ -1,3 +1,5 @@
+package user_agent
+
 @XmlRootElement
 public class SimulationSettings {
 

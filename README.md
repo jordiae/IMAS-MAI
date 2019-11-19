@@ -8,7 +8,7 @@
 ```java -cp lib\jade.jar;lib\weka.jar;src\out\production\IMAS_test\ jade.Boot -gui -agents user:UserAgent```
 
 3. Use the command line to train or predict:  
-```USAGE: T <config_file> | P```
+```USAGE: T <config_file> | P```   
 ```Example: T imas.settings```
 
 
@@ -20,5 +20,5 @@
 ```java -cp lib/jade.jar:lib/weka.jar:src/out/production/IMAS_test/ jade.Boot -gui -agents user:UserAgent```
 
 3. Use the command line to train or predict:  
-```USAGE: T <config_file> | P```
+```USAGE: T <config_file> | P```   
 ```Example: T imas.settings```

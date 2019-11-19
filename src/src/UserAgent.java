@@ -15,11 +15,18 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
+import javafx.util.Pair;
+
+// XML required imports
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 
 public class UserAgent extends Agent {
-    private String CONFIG_FILE_PATH = "../config/imas.settings";
+    private String CONFIG_FILE_PATH = "../config/";
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
-    //private SimulationSettings simulationSettings;
+    private ConfigReader configReader;
 
     private class WaitUserInputBehaviour extends CyclicBehaviour {
 
@@ -28,10 +35,26 @@ public class UserAgent extends Agent {
         }
 
         public void action() {
-            String action = read_user_input();
-            if (action != null) {
+            Pair<String, String> user_input = read_user_input();
+            if (user_input!= null) {
                 ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-                msg.setContent(action);
+                if (user_input.getKey().equals("T")) {
+                    // Load the simulation parameters
+                    boolean paramsReady = readConfigFile(user_input.getValue());
+
+                    // Pass the simulation settings to the manager agent on creation, with a format:
+                    // Title, algorithm, classifiers, training settings, classifier instances and database file.
+                    // e.g. 'T_IMAS_complete_simulation@J48@5@100@200@300@400@500@10@segment-test.arff'
+                    String arguments = user_input.getKey()+"_"+configReader.getTitle() + '@' + configReader.getAlgorithm() + '@' +
+                            configReader.getClassifiers() + '@' +
+                            configReader.getTrainingSettings().replace(',', '@') + '@' +
+                            configReader.getClassifierInstances() + "@" +
+                            configReader.getFile();
+                    msg.setContent(arguments);
+                }
+                else {
+                    msg.setContent(user_input.getKey());
+                }
                 msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
                 send(msg);
             }
@@ -47,6 +70,7 @@ public class UserAgent extends Agent {
         sd.setOwnership("IMAS_group");
         dfd.setName(getAID());
         dfd.addServices(sd);
+
         try {
             DFService.register(this,dfd);
             WaitUserInputBehaviour UserBehaviour = new  WaitUserInputBehaviour(this);
@@ -75,37 +99,44 @@ public class UserAgent extends Agent {
         //Close any open/required resources
     }
 
-    protected String read_user_input() {
+    private Pair<String, String> read_user_input() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         try {
             String action = reader.readLine();
-            if(action.equals("T")) {
-                //read_config_file();
-                //TO-DO: return also the content of the configuration file
-                return "T";
+            String[] words = action.split(" ");
+            if(words[0].equals("T")) {
+                return new Pair<String, String>("T", words[1]);
             }
-            else if (action.equals("P")) {
-                return "P";
+            else if (words[0].equals("P")) {
+                return new Pair<String, String>("P", null);
             }
 
             else {
-                System.out.println("Wrong action");
-                System.out.println("USAGE: T <config_file> | P");
+                myLogger.log(Logger.INFO, "Wrong action");
+                myLogger.log(Logger.INFO, "USAGE: T <config_file> | P");
                 return null;
             }
         }
         catch (IOException e) {
-            System.out.println("Wrong action");
-            System.out.println("USAGE: T <config_file> | P");
+            myLogger.log(Logger.INFO, "Wrong action");
+            myLogger.log(Logger.INFO, "USAGE: T <config_file> | P");
             e.printStackTrace();
             return null;
         }
     }
 
-    /*protected void read_config_file() {
-        JAXBContext jaxbContext = JAXBContext.newInstance(SimulationSettings.class);
-        Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-        Customer customer = (Customer) jaxbUnmarshaller.unmarshal(new File(CONFIG_FILE_PATH));
-        return null;
-    }*/
+    private boolean readConfigFile(String filename) {
+        myLogger.log(Logger.INFO, "Loading simulation parameters from: ", CONFIG_FILE_PATH + filename);
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(ConfigReader.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            configReader = (ConfigReader) jaxbUnmarshaller.unmarshal(new File(CONFIG_FILE_PATH + filename));
+            myLogger.log(Logger.INFO, "Simulation parameters loaded SUCCESSFULLY");
+            return true;
+        }catch(JAXBException e ){
+            myLogger.log(Logger.SEVERE, "Error parsing simulation settings: " + e.toString());
+        }
+        // To-Do: Something went wrong, evaluate what to do here...
+        return false;
+    }
 }

@@ -9,3 +9,17 @@
 .idea/vcs.xml
 APDescription.txt
 MTPs-Main-Container.txt
+src/.idea/libraries/weka_stable_3_6_6.xml
+src/.idea/libraries/weka.xml
+src/.idea/libraries/log4j_1_2_17.xml
+src/.idea/libraries/jade.xml
+src/.idea/libraries/jaxb_api_2_2_12.xml
+src/.idea/libraries/commons_codec_1_3.xml
+src/.idea/libraries/weka_stable_3_6_6.xml
+src/.idea/libraries/weka.xml
+src/.idea/libraries/log4j_1_2_17.xml
+src/.idea/libraries/jade.xml
+src/.idea/libraries/jaxb_api_2_2_12.xml
+src/.idea/libraries/commons_codec_1_3.xml
+src/.idea/libraries/commons_codec_1_3.xml
+*.class

@@ -54,11 +54,11 @@ public class ManagerAgent extends Agent {
                             System.out.println(config_file);
                             // get information from the content
                             String[] part = config_file.split("@");
-                            for (int i = 0; i < part.length; ++i){
-                                System.out.println(part[i]);
-                            }
+                                //~ for (int i = 0; i < part.length; ++i){
+                                    //~ System.out.println(part[i]);
+                                //~ }
                             String title = part[0];
-                            System.out.println(title);
+                                //~ System.out.println(title);
                             String algorithm = part[1];
                             int num_classifiers = Integer.parseInt(part[2]);
                             int[] num_train_instances_for_classifier = new int[num_classifiers];
@@ -66,7 +66,8 @@ public class ManagerAgent extends Agent {
                                 num_train_instances_for_classifier[i] = Integer.parseInt(part[3+i]);
                             }
                             int num_test_instances = Integer.parseInt(part[3+num_classifiers]);
-                            String name_of_data_file = part[4+num_classifiers];
+                            String name_of_data_file = "src/data/" + part[4+num_classifiers];
+                            System.out.println(name_of_data_file);
                             
                             //~ Create the classifiers (num_classifiers) in a container named ManagerController
                             

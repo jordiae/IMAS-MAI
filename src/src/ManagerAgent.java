@@ -96,27 +96,24 @@ public class ManagerAgent extends Agent {
                             ArffReader arff = new ArffReader(reader);
                             Instances data = arff.getData();
                             data.setClassIndex(data.numAttributes() - 1);
-                            int num_instances = data.size();
-                            String serialized_instances = Transformer.toString(data);
+                            String[] classifier_instances = new String[num_classifiers];
                             
                             // convert the instances to strings using the Transformer class
-                            
-
-                            // send the str_train_instances to the classifiers to train with T_str_train_instances, different number of instances for each classifier
-                                //~ to do so use:
-                                    //~ ACLMessage msg = new ACLMessage( ACLMessage.REQUEST );
-                                    //~ msg.setContent("" );
-                                    //~ for(int i=0; i<num_classifiers; i++){
-                                        //~ msg.addReceiver("Classifier"+i);
-                                        //~ send(msg);
-                                    //~ }
-                            ACLMessage msg_to_classifiers = new ACLMessage( ACLMessage.REQUEST );
-                            msg_to_classifiers.setContent("T_" + serialized_instances);
                             for(int i=0; i<num_classifiers; i++){
+                                data.randomize(new java.util.Random(0));
+                                classifier_instances[i] = Transformer.toString(new Instances(data, 0, num_train_instances_for_classifier[i]));
+                            }
+                            String serialized_instances = Transformer.toString(data);
+                            
+                            
+                            for(int i=0; i<num_classifiers; i++){
+                                ACLMessage msg_to_classifiers = new ACLMessage( ACLMessage.REQUEST );
+                                msg_to_classifiers.setContent("T_" + classifier_instances[i]);
                                 AID a = new AID("Classifier"+i, false);
                                 msg_to_classifiers.addReceiver(a);
+                                send(msg_to_classifiers);
                             }
-                            send(msg_to_classifiers);
+                            
                             // wait until all classifiers have been trained: to do so i think we should use a class variable and count the INFORM qith trained_successfully from a classifier.
                             // send a INFORM message to the user: Trained successfully: same way as sending messages to classifiers changing the dest.
                             

@@ -18,5 +18,5 @@
 2. Execute Jade with User Agent (the rest will be created dynamically):  
 ```java -cp lib/jade.jar:lib/weka.jar:src/out/production/IMAS_test/ jade.Boot -gui -agents user:UserAgent```
 
-3. Use the command line to train or predict:  
+3. Use the command line to train or predict (try T imas.settings instead of T <config_file>):  
 ```USAGE: T <config_file> | P```

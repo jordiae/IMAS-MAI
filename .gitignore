@@ -23,3 +23,7 @@ src/.idea/libraries/jaxb_api_2_2_12.xml
 src/.idea/libraries/commons_codec_1_3.xml
 src/.idea/libraries/commons_codec_1_3.xml
 *.class
+
+out/
+
+.idea/

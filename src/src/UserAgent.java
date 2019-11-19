@@ -15,16 +15,19 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
-import javafx.util.Pair;
 
-// XML required imports
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Node;
+import org.w3c.dom.Element;
+import java.io.File;
 
 public class UserAgent extends Agent {
-    private String CONFIG_FILE_PATH = "../config/";
+    private String CONFIG_FILE_PATH = "src/config/";
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
     private ConfigReader configReader;
 
@@ -35,17 +38,19 @@ public class UserAgent extends Agent {
         }
 
         public void action() {
-            Pair<String, String> user_input = read_user_input();
-            if (user_input!= null) {
+            String user_input = read_user_input();
+            String[] words = user_input.split(" ");
+
+            if (!user_input.isEmpty()) {
                 ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-                if (user_input.getKey().equals("T")) {
+                if (words[0].equals("T")) {
                     // Load the simulation parameters
-                    boolean paramsReady = readConfigFile(user_input.getValue());
+                    boolean paramsReady = readConfigFile(words[1]);
 
                     // Pass the simulation settings to the manager agent on creation, with a format:
                     // Title, algorithm, classifiers, training settings, classifier instances and database file.
                     // e.g. 'T_IMAS_complete_simulation@J48@5@100@200@300@400@500@10@segment-test.arff'
-                    String arguments = user_input.getKey()+"_"+configReader.getTitle() + '@' + configReader.getAlgorithm() + '@' +
+                    String arguments = words[0] + "_" + configReader.getTitle() + '@' + configReader.getAlgorithm() + '@' +
                             configReader.getClassifiers() + '@' +
                             configReader.getTrainingSettings().replace(',', '@') + '@' +
                             configReader.getClassifierInstances() + "@" +
@@ -53,7 +58,7 @@ public class UserAgent extends Agent {
                     msg.setContent(arguments);
                 }
                 else {
-                    msg.setContent(user_input.getKey());
+                    msg.setContent(words[0]+"_");
                 }
                 msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
                 send(msg);
@@ -70,6 +75,8 @@ public class UserAgent extends Agent {
         sd.setOwnership("IMAS_group");
         dfd.setName(getAID());
         dfd.addServices(sd);
+
+//        this.readConfigFile("imas.settings");
 
         try {
             DFService.register(this,dfd);
@@ -99,16 +106,13 @@ public class UserAgent extends Agent {
         //Close any open/required resources
     }
 
-    private Pair<String, String> read_user_input() {
+    private String read_user_input() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         try {
             String action = reader.readLine();
-            String[] words = action.split(" ");
-            if(words[0].equals("T")) {
-                return new Pair<String, String>("T", words[1]);
-            }
-            else if (words[0].equals("P")) {
-                return new Pair<String, String>("P", null);
+
+            if(action.startsWith("T") || action.startsWith("P")) {
+                return action;
             }
 
             else {
@@ -125,18 +129,41 @@ public class UserAgent extends Agent {
         }
     }
 
-    private boolean readConfigFile(String filename) {
-        myLogger.log(Logger.INFO, "Loading simulation parameters from: ", CONFIG_FILE_PATH + filename);
+    private boolean readConfigFile(String file_name) {
+        myLogger.log(Logger.INFO, "Loading simulation parameters from: " + this.CONFIG_FILE_PATH + '/' + file_name);
+
+        configReader = new ConfigReader();
+
+        File fXmlFile = new File(this.CONFIG_FILE_PATH + '/' + file_name);
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = null;
+
         try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(ConfigReader.class);
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            configReader = (ConfigReader) jaxbUnmarshaller.unmarshal(new File(CONFIG_FILE_PATH + filename));
-            myLogger.log(Logger.INFO, "Simulation parameters loaded SUCCESSFULLY");
+            dBuilder = dbFactory.newDocumentBuilder();
+            Document document = dBuilder.parse(fXmlFile);
+            document.getDocumentElement().normalize();
+
+            //Here comes the root node
+            Element root = document.getDocumentElement();
+            NodeList nList = document.getElementsByTagName("SimulationSettings");
+
+            System.out.println(nList.getLength());
+            Node nNode = nList.item(0);
+            Element rootElement = (Element) nNode;
+
+            myLogger.log(Logger.INFO, "Node " + rootElement.getAttributes().getLength());
+            configReader.setTitle(rootElement.getElementsByTagName("title").item(0).getTextContent());
+            configReader.setAlgorithm(rootElement.getElementsByTagName("algorithm").item(0).getTextContent());
+            configReader.setClassifiers(rootElement.getElementsByTagName("classifiers").item(0).getTextContent());
+            configReader.setTrainingSettings(rootElement.getElementsByTagName("trainingSettings").item(0).getTextContent());
+            configReader.setClassifierInstances(rootElement.getElementsByTagName("classifyInstances").item(0).getTextContent());
+            configReader.setFile(rootElement.getElementsByTagName("file").item(0).getTextContent());
+            myLogger.log(Logger.INFO, "Simulation " + configReader.getTitle() + " config loaded!");
             return true;
-        }catch(JAXBException e ){
-            myLogger.log(Logger.SEVERE, "Error parsing simulation settings: " + e.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        // To-Do: Something went wrong, evaluate what to do here...
+
         return false;
     }
 }

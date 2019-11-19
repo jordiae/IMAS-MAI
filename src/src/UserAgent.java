@@ -1,3 +1,5 @@
+package src;
+
 import jade.core.*;
 import jade.core.behaviours.*;
 import jade.domain.DFService;
@@ -5,7 +7,6 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -16,20 +17,10 @@ import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
-import org.w3c.dom.Element;
-import java.io.File;
-
 public class UserAgent extends Agent {
     private String CONFIG_FILE_PATH = "src/config/";
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
-    private ConfigReader configReader;
+    private SimulationConfig simulationConfig;
 
     private class WaitUserInputBehaviour extends CyclicBehaviour {
 
@@ -38,31 +29,29 @@ public class UserAgent extends Agent {
         }
 
         public void action() {
-            String user_input = read_user_input();
+            String user_input = readUserInput();
             String[] words = user_input.split(" ");
 
-            if (!user_input.isEmpty()) {
-                ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-                if (words[0].equals("T")) {
-                    // Load the simulation parameters
-                    boolean paramsReady = readConfigFile(words[1]);
-
-                    // Pass the simulation settings to the manager agent on creation, with a format:
-                    // Title, algorithm, classifiers, training settings, classifier instances and database file.
-                    // e.g. 'T_IMAS_complete_simulation@J48@5@100@200@300@400@500@10@segment-test.arff'
-                    String arguments = words[0] + "_" + configReader.getTitle() + '@' + configReader.getAlgorithm() + '@' +
-                            configReader.getClassifiers() + '@' +
-                            configReader.getTrainingSettings().replace(',', '@') + '@' +
-                            configReader.getClassifierInstances() + "@" +
-                            configReader.getFile();
-                    msg.setContent(arguments);
-                }
-                else {
-                    msg.setContent(words[0]+"_");
-                }
-                msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
-                send(msg);
+            String configFile = "imas.settings";
+            String action = words[0];
+            if (words.length == 2){
+                configFile = words[1];
             }
+            // Create message
+            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+            msg.setContent(action);
+            if (action.equals("T")) {
+                // Load the simulation parameters
+                simulationConfig = SimulationConfig.fromXML(CONFIG_FILE_PATH + "/" + configFile);
+                // Add Serializable object to message
+                try {
+                    msg.setContentObject(simulationConfig);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
+            send(msg);
         }
     }
 
@@ -106,64 +95,32 @@ public class UserAgent extends Agent {
         //Close any open/required resources
     }
 
-    private String read_user_input() {
+    private String readUserInput() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+        boolean validAction = false;
+        String instructions = "\n\nPlease input one of the following action request:\n" +
+                "'T' : For simulating with the 'imas.settings' configuration file\n" +
+                "'T <config_file_name> : For simulating with another configuration file\n" +
+                "'P' : To predict with the already train models.\n\n";
+        String action = "";
+        System.out.println(instructions);
         try {
-            String action = reader.readLine();
-
-            if(action.startsWith("T") || action.startsWith("P")) {
-                return action;
+            while(!validAction) {
+                // Read user input
+                action = reader.readLine();
+                if (action != null && (action.startsWith("T") || action.startsWith("P"))) {
+                    validAction = true;
+                } else {
+                    myLogger.log(Logger.INFO, "Wrong action");
+                    myLogger.log(Logger.INFO, instructions);
+                }
             }
-
-            else {
-                myLogger.log(Logger.INFO, "Wrong action");
-                myLogger.log(Logger.INFO, "USAGE: T <config_file> | P");
-                return null;
-            }
-        }
-        catch (IOException e) {
-            myLogger.log(Logger.INFO, "Wrong action");
-            myLogger.log(Logger.INFO, "USAGE: T <config_file> | P");
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private boolean readConfigFile(String file_name) {
-        myLogger.log(Logger.INFO, "Loading simulation parameters from: " + this.CONFIG_FILE_PATH + '/' + file_name);
-
-        configReader = new ConfigReader();
-
-        File fXmlFile = new File(this.CONFIG_FILE_PATH + '/' + file_name);
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = null;
-
-        try {
-            dBuilder = dbFactory.newDocumentBuilder();
-            Document document = dBuilder.parse(fXmlFile);
-            document.getDocumentElement().normalize();
-
-            //Here comes the root node
-            Element root = document.getDocumentElement();
-            NodeList nList = document.getElementsByTagName("SimulationSettings");
-
-            System.out.println(nList.getLength());
-            Node nNode = nList.item(0);
-            Element rootElement = (Element) nNode;
-
-            myLogger.log(Logger.INFO, "Node " + rootElement.getAttributes().getLength());
-            configReader.setTitle(rootElement.getElementsByTagName("title").item(0).getTextContent());
-            configReader.setAlgorithm(rootElement.getElementsByTagName("algorithm").item(0).getTextContent());
-            configReader.setClassifiers(rootElement.getElementsByTagName("classifiers").item(0).getTextContent());
-            configReader.setTrainingSettings(rootElement.getElementsByTagName("trainingSettings").item(0).getTextContent());
-            configReader.setClassifierInstances(rootElement.getElementsByTagName("classifyInstances").item(0).getTextContent());
-            configReader.setFile(rootElement.getElementsByTagName("file").item(0).getTextContent());
-            myLogger.log(Logger.INFO, "Simulation " + configReader.getTitle() + " config loaded!");
-            return true;
         } catch (Exception e) {
+            myLogger.log(Logger.SEVERE, "Error during user interaction");
             e.printStackTrace();
+            return "";
         }
+        return action;
 
-        return false;
     }
 }

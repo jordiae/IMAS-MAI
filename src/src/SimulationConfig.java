@@ -95,4 +95,13 @@ public class SimulationConfig implements Serializable {
     public void setFile(String file) {
         this.file = file;
     }
+
+    public String toString(){
+        return "\n - Title: " + this.getTitle() + "\n" +
+               " - Algorithm: " + this.getAlgorithm() + "\n" +
+               " - File (Dataset): " + this.getFile() + "\n" +
+               " - Classifiers: " + this.getClassifiers() + "\n" +
+               " - Classifier Instances:  " + this.getClassifierInstances() + "\n" +
+               " - Training Settings: " + this.getTrainingSettings() + "\n";
+    }
 }

@@ -33,6 +33,7 @@ public class UserAgent extends Agent {
             String[] words = user_input.split(" ");
 
             String configFile = "imas.settings";
+
             String action = words[0];
             if (words.length == 2){
                 configFile = words[1];
@@ -52,6 +53,10 @@ public class UserAgent extends Agent {
             }
             msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
             send(msg);
+
+            // Await confirmation from action performed
+//            ACLMessage response = myAgent.receive();  // Wait for message
+//            processActionResponse(response);
         }
     }
 
@@ -65,8 +70,6 @@ public class UserAgent extends Agent {
         dfd.setName(getAID());
         dfd.addServices(sd);
 
-//        this.readConfigFile("imas.settings");
-
         try {
             DFService.register(this,dfd);
             WaitUserInputBehaviour UserBehaviour = new  WaitUserInputBehaviour(this);
@@ -79,7 +82,9 @@ public class UserAgent extends Agent {
         // Dynamic creation of the Manager Agent
         ContainerController cc = getContainerController();
         try {
-            AgentController ac = cc.createNewAgent("manager", "ManagerAgent", null);
+            AgentController ac = cc.createNewAgent("manager",
+                    this.getClass().getPackageName() + ".ManagerAgent",
+                    null);
             try {
                 ac.start();
             } catch (StaleProxyException e) {
@@ -95,10 +100,15 @@ public class UserAgent extends Agent {
         //Close any open/required resources
     }
 
+    private void processActionResponse(ACLMessage response) {
+//        To-Do: Process response from training and prediction separately... when state is idle enable user interaction
+//        again
+    }
+
     private String readUserInput() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         boolean validAction = false;
-        String instructions = "\n\nPlease input one of the following action request:\n" +
+        String instructions = "\n\n****** Please input one of the following action request *************\n" +
                 "'T' : For simulating with the 'imas.settings' configuration file\n" +
                 "'T <config_file_name> : For simulating with another configuration file\n" +
                 "'P' : To predict with the already train models.\n\n";
@@ -111,8 +121,7 @@ public class UserAgent extends Agent {
                 if (action != null && (action.startsWith("T") || action.startsWith("P"))) {
                     validAction = true;
                 } else {
-                    myLogger.log(Logger.INFO, "Wrong action");
-                    myLogger.log(Logger.INFO, instructions);
+                    myLogger.log(Logger.WARNING, "Wrong action" + instructions);
                 }
             }
         } catch (Exception e) {

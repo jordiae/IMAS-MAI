@@ -1,3 +1,5 @@
+package src;
+
 import jade.core.*;
 import jade.core.behaviours.*;
 import jade.lang.acl.ACLMessage;
@@ -43,19 +45,19 @@ public class ClassifierAgent extends Agent {
                      */
                     if ((content == null) || ((content.charAt(0) != 'T') && (content.charAt(0) != 'P')) || (content.charAt(1) != '_')) {
                         reply.setPerformative(ACLMessage.REFUSE);
-                        myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Got sent badly formatted request header: ["+content+"] received from "+msg.getSender().getLocalName());
+                        myLogger.log(Logger.INFO, "[" + getLocalName() + "] - Received badly formatted request header: ["+content+"] received from "+msg.getSender().getLocalName());
                     } else if (content.charAt(0) == 'T') {
                         String inst_str = content.substring(2);
                         try {
                             Instances data = Transformer.toInst(inst_str);
                             myClassifier = new J48();
                             myClassifier.buildClassifier(data);
-                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" trained classifier as per request from "+msg.getSender().getLocalName());
+                            myLogger.log(Logger.INFO, "[" + getLocalName() + "] trained classifier as requested by "+msg.getSender().getLocalName());
                             reply.setPerformative(ACLMessage.INFORM);
                             reply.setContent("Trained successfully");
                         } catch (Exception e) {
                             reply.setPerformative(ACLMessage.REFUSE);
-                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Got sent badly formatted Instances ["+content+"] received from "+msg.getSender().getLocalName());
+                            myLogger.log(Logger.INFO, "[" + getLocalName() + "] - Received badly formatted Instances ["+content+"] received from "+msg.getSender().getLocalName());
                         }
                     } else {
                         String inst_str = content.substring(2);
@@ -68,17 +70,17 @@ public class ClassifierAgent extends Agent {
                                 Double y = myClassifier.classifyInstance(currInst);
                                 results.add(y);
                             }
-                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" successfully performed prediction as per request from "+msg.getSender().getLocalName());
+                            myLogger.log(Logger.INFO, "[" + getLocalName() + "] successfully performed prediction as requested by "+msg.getSender().getLocalName());
                             reply.setPerformative(ACLMessage.INFORM);
                             reply.setContentObject((Serializable) results);
                         } catch (Exception e) {
                             reply.setPerformative(ACLMessage.REFUSE);
-                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Got sent badly formatted Instances ["+content+"] received from "+msg.getSender().getLocalName());
+                            myLogger.log(Logger.INFO, "[" + getLocalName() + "] - Received badly formatted Instances ["+content+"] received from "+msg.getSender().getLocalName());
                         }
                     }
                 }
                 else {
-                    myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Unexpected message ["+ACLMessage.getPerformative(msg.getPerformative())+"] received from "+msg.getSender().getLocalName());
+                    myLogger.log(Logger.INFO, "[" + getLocalName() + "] - Unexpected message ["+ACLMessage.getPerformative(msg.getPerformative())+"] received from "+msg.getSender().getLocalName());
                     reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
                     reply.setContent("( (Unexpected-act "+ACLMessage.getPerformative(msg.getPerformative())+") )");
                 }
@@ -106,7 +108,7 @@ public class ClassifierAgent extends Agent {
             WaitMSGAndActBehaviour PingBehaviour = new  WaitMSGAndActBehaviour(this);
             addBehaviour(PingBehaviour);
         } catch (FIPAException e) {
-            myLogger.log(Logger.SEVERE, "Agent "+getLocalName()+" - Cannot register with DF", e);
+            myLogger.log(Logger.SEVERE, "[" + getLocalName() + "] - Cannot register with DF", e);
             doDelete();
         }
     }

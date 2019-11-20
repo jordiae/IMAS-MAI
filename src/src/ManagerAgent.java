@@ -30,6 +30,11 @@ import java.io.*;
 public class ManagerAgent extends Agent {
 
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
+    private boolean trained = false;
+    private Instances data;
+    private int num_test_instances;
+    private int num_classifiers;
+    private int wainting_classifiers = 0;
 
     // Behaviour
     private class WaitOrderAndActBehaviour extends CyclicBehaviour {
@@ -54,19 +59,20 @@ public class ManagerAgent extends Agent {
                             System.out.println(config_file);
                             // get information from the content
                             String[] part = config_file.split("@");
-                            for (int i = 0; i < part.length; ++i){
-                                System.out.println(part[i]);
-                            }
+                                //~ for (int i = 0; i < part.length; ++i){
+                                    //~ System.out.println(part[i]);
+                                //~ }
                             String title = part[0];
-                            System.out.println(title);
+                                //~ System.out.println(title);
                             String algorithm = part[1];
-                            int num_classifiers = Integer.parseInt(part[2]);
+                            num_classifiers = Integer.parseInt(part[2]);
                             int[] num_train_instances_for_classifier = new int[num_classifiers];
                             for (int i = 0; i < num_classifiers; ++i){
                                 num_train_instances_for_classifier[i] = Integer.parseInt(part[3+i]);
                             }
-                            int num_test_instances = Integer.parseInt(part[3+num_classifiers]);
-                            String name_of_data_file = part[4+num_classifiers];
+                            num_test_instances = Integer.parseInt(part[3+num_classifiers]);
+                            String name_of_data_file = "src/data/" + part[4+num_classifiers];
+                            //~ System.out.println(name_of_data_file);
                             
                             //~ Create the classifiers (num_classifiers) in a container named ManagerController
                             
@@ -93,56 +99,96 @@ public class ManagerAgent extends Agent {
                             // load the arff file and separate the instances for the classifiers and for the test phase
                             BufferedReader reader = new BufferedReader(new FileReader(name_of_data_file));
                             ArffReader arff = new ArffReader(reader);
-                            Instances data = arff.getData();
+                            data = arff.getData();
                             data.setClassIndex(data.numAttributes() - 1);
-                            int num_instances = data.size();
-                            String serialized_instances = Transformer.toString(data);
+                            String[] classifier_instances = new String[num_classifiers];
                             
                             // convert the instances to strings using the Transformer class
-                            
-
-                            // send the str_train_instances to the classifiers to train with T_str_train_instances, different number of instances for each classifier
-                                //~ to do so use:
-                                    //~ ACLMessage msg = new ACLMessage( ACLMessage.REQUEST );
-                                    //~ msg.setContent("" );
-                                    //~ for(int i=0; i<num_classifiers; i++){
-                                        //~ msg.addReceiver("Classifier"+i);
-                                        //~ send(msg);
-                                    //~ }
-                            ACLMessage msg_to_classifiers = new ACLMessage( ACLMessage.REQUEST );
-                            msg_to_classifiers.setContent("T_" + serialized_instances);
                             for(int i=0; i<num_classifiers; i++){
+                                data.randomize(new java.util.Random(0));
+                                classifier_instances[i] = Transformer.toString(new Instances(data, 0, num_train_instances_for_classifier[i]));
+                            }
+                            //~ String serialized_instances = Transformer.toString(data);
+                            
+                            
+                            for(int i=0; i<num_classifiers; i++){
+                                ACLMessage msg_to_classifiers = new ACLMessage( ACLMessage.REQUEST );
+                                msg_to_classifiers.setContent("T_" + classifier_instances[i]);
                                 AID a = new AID("Classifier"+i, false);
                                 msg_to_classifiers.addReceiver(a);
+                                send(msg_to_classifiers);
                             }
-                            send(msg_to_classifiers);
+                            
                             // wait until all classifiers have been trained: to do so i think we should use a class variable and count the INFORM qith trained_successfully from a classifier.
                             // send a INFORM message to the user: Trained successfully: same way as sending messages to classifiers changing the dest.
                             
                             //debug INFORM message:
+                            trained = true;
                             myLogger.log(Logger.INFO, "Agent "+getLocalName()+" read message from "+msg.getSender().getLocalName());
                             reply.setPerformative(ACLMessage.INFORM);
-                            reply.setContent("Ok");
+                            reply.setContent("Classifiers have been trained");
                             
                         } catch (Exception e) {
+                            trained = false;
                             reply.setPerformative(ACLMessage.REFUSE);
                             myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Got sent badly formatted Instances ["+content+"] received from "+msg.getSender().getLocalName());
                         }
                     } 
-                    else { // P_order: Test phase
-                        // No content inside the message (maybe)
-                        // send the str_test_instances to the classifiers with P_str_test_instances.
-                        // wait until all classifiers have classified the test instances (this time there are the same, and will be an instance of Serializable of new ArrayList<Double>())
-                        // establish the winner class for each instances besed on our system
-                        // return the winners in an INFORM message to the user: ((Serializable) ArrayList<Double>())
-                        myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Not trained yet ["+ACLMessage.getPerformative(msg.getPerformative())+"] received from "+msg.getSender().getLocalName());
-                        reply.setPerformative(ACLMessage.REFUSE);
-                        reply.setContent("Classifiers not trained yet");
+                    else {
+                        if (trained) {
+                            try {
+                                // P_order: Test phase
+                                // No content inside the message (maybe)
+                                data.randomize(new java.util.Random(0));
+                                String s_instances_to_classify = Transformer.toString(new Instances(data, 0, num_test_instances));
+                                ACLMessage msg_to_classifiers = new ACLMessage(ACLMessage.REQUEST);
+                                msg_to_classifiers.setContent("P_" + s_instances_to_classify);
+                                for(int i=0; i<num_classifiers; i++){
+                                    AID a = new AID("Classifier"+i, false);
+                                    msg_to_classifiers.addReceiver(a);
+                                    wainting_classifiers = wainting_classifiers + 1;
+                                }
+                                send(msg_to_classifiers);
+                                
+                                myLogger.log(Logger.INFO, "Agent "+getLocalName()+" read message from "+msg.getSender().getLocalName());
+                                reply.setPerformative(ACLMessage.INFORM);
+                                reply.setContent("test sent to classifiers");
+                                // send the str_test_instances to the classifiers with P_str_test_instances.
+                                // wait until all classifiers have classified the test instances (this time there are the same, and will be an instance of Serializable of new ArrayList<Double>())
+                                // establish the winner class for each instances besed on our system
+                                // return the winners in an INFORM message to the user: ((Serializable) ArrayList<Double>())
+                            } catch (Exception e) {
+                                reply.setPerformative(ACLMessage.REFUSE);
+                                myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - extrange problem with Transformer ["+content+"] received from "+msg.getSender().getLocalName());
+                            }                            
+                        } else {
+                            myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Not trained yet ["+ACLMessage.getPerformative(msg.getPerformative())+"] received from "+msg.getSender().getLocalName());
+                            reply.setPerformative(ACLMessage.REFUSE);
+                            reply.setContent("Classifiers not trained yet");
+                        }
                     }
                     send(reply);
                 }
                 else if (msg.getPerformative() == ACLMessage.INFORM) {
-                    System.out.println(msg.getContent());
+                    if (trained){
+                        if (wainting_classifiers > 0){
+                            try {
+                                ACLMessage answer_to_user = new ACLMessage(ACLMessage.INFORM);
+                                answer_to_user.setContent(msg.getContent());
+                                AID u = new AID("UserAgent", false);
+                                myLogger.log(Logger.INFO, "Agent "+getLocalName()+" returning classified instances to user");
+                                answer_to_user.addReceiver(u);
+                                wainting_classifiers = wainting_classifiers - 1;
+                                send(answer_to_user);
+                            } catch (Exception e) {
+                                System.out.println("error in info" + msg.getContent());
+                            }
+                        } else { // trained ok from classifier
+                            System.out.println(msg.getContent()); 
+                        }
+                    } else {
+                        System.out.println("Not trained yet" + msg.getContent());
+                    }
                 }
                 else {
                     //~ myLogger.log(Logger.INFO, "Agent "+getLocalName()+" - Unexpected message ["+ACLMessage.getPerformative(msg.getPerformative())+"] received from "+msg.getSender().getLocalName());

@@ -6,16 +6,17 @@ import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
+import jade.lang.acl.UnreadableException;
 import jade.proto.AchieveREInitiator;
 import jade.util.Logger;
-import utils.SimulationConfig;
+import utils.Config;
 
 import java.io.IOException;
 
 public class WaitUserInputBehaviour extends CyclicBehaviour {
     private UserAgent agent;
     private String CONFIG_FILE_PATH = "src/config/";
-    private SimulationConfig simulationConfig;
+    private Config config;
 
     public WaitUserInputBehaviour(UserAgent a) {
         super(a);
@@ -37,35 +38,17 @@ public class WaitUserInputBehaviour extends CyclicBehaviour {
         ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
         msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
         msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-        msg.setContent(action);
-        if (action.equals("T")) {
-            // Load the simulation parameters
-            simulationConfig = SimulationConfig.fromXML(CONFIG_FILE_PATH + "/" + configFile);
-            // Add Serializable object to message
-            try {
-                msg.setContentObject(simulationConfig);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+
+        // Load the simulation parameters
+        config = new Config("T", CONFIG_FILE_PATH + "/" + configFile);
+        // Add Serializable object to message
+        try {
+            msg.setContentObject(config);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        agent.addBehaviour(new AchieveREInitiator(agent, msg) {
-            protected void handleInform(ACLMessage inform) {
-                System.out.println("Agent "+inform.getSender().getName()+" successfully performed the requested action");
-            }
-            protected void handleRefuse(ACLMessage refuse) {
-                System.out.println("Agent "+refuse.getSender().getName()+" refused to perform the requested action");
-            }
-            protected void handleFailure(ACLMessage failure) {
-                if (failure.getSender().equals(myAgent.getAMS())) {
-                    System.out.println("Responder does not exist");
-                }
-                else {
-                    System.out.println("Agent "+failure.getSender().getName()+" failed to perform the requested action");
-                }
-            }
-        } );
-
-
+        agent.startProcess(msg);
+        block();
     }
 }

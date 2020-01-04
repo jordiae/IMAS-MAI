@@ -10,8 +10,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.Serializable;
 
-public class SimulationConfig implements Serializable {
+public class Config implements Serializable {
 
+    private String action;
     private String title;
     private String algorithm;
     private String classifiers;
@@ -19,35 +20,45 @@ public class SimulationConfig implements Serializable {
     private String classifierInstances;
     private String file;
 
-    public static SimulationConfig fromXML(String file_path) {
-        SimulationConfig simulationConfig = new SimulationConfig();
-        File xmlFile = new File(file_path);
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder builder = null;
-        try {
-            builder = dbFactory.newDocumentBuilder();
-            Document document = builder.parse(xmlFile);
-            document.getDocumentElement().normalize();
+    public Config(String action, String file_path) {
+        this.setAction(action);
+        if (action.equals("T")) {
+            File xmlFile = new File(file_path);
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = null;
+            try {
+                builder = dbFactory.newDocumentBuilder();
+                Document document = builder.parse(xmlFile);
+                document.getDocumentElement().normalize();
 
-            NodeList nList = document.getElementsByTagName("SimulationSettings");
-            // Get root element
-            Node nNode = nList.item(0);
-            Element rootElement = (Element) nNode;
+                NodeList nList = document.getElementsByTagName("SimulationSettings");
+                // Get root element
+                Node nNode = nList.item(0);
+                Element rootElement = (Element) nNode;
 
-            //myLogger.log(Logger.INFO, "Node " + rootElement.getAttributes().getLength());
-            simulationConfig.setTitle(rootElement.getElementsByTagName("title").item(0).getTextContent());
-            simulationConfig.setAlgorithm(rootElement.getElementsByTagName("algorithm").item(0).getTextContent());
-            simulationConfig.setClassifiers(rootElement.getElementsByTagName("classifiers").item(0).getTextContent());
-            simulationConfig.setTrainingSettings(rootElement.getElementsByTagName("trainingSettings").item(0).getTextContent());
-            simulationConfig.setClassifierInstances(rootElement.getElementsByTagName("classifyInstances").item(0).getTextContent());
-            simulationConfig.setFile(rootElement.getElementsByTagName("file").item(0).getTextContent());
-            //myLogger.log(Logger.INFO, "Simulation " + configReader.getTitle() + " config loaded!");
-            return simulationConfig;
-        } catch (Exception e) {
-            System.err.println("Parsing of xml configuration file error: \n" + e.getMessage());
+                //myLogger.log(Logger.INFO, "Node " + rootElement.getAttributes().getLength());
+                this.setTitle(rootElement.getElementsByTagName("title").item(0).getTextContent());
+                this.setAlgorithm(rootElement.getElementsByTagName("algorithm").item(0).getTextContent());
+                this.setClassifiers(rootElement.getElementsByTagName("classifiers").item(0).getTextContent());
+                this.setTrainingSettings(rootElement.getElementsByTagName("trainingSettings").item(0).getTextContent());
+                this.setClassifierInstances(rootElement.getElementsByTagName("classifyInstances").item(0).getTextContent());
+                this.setFile(rootElement.getElementsByTagName("file").item(0).getTextContent());
+                //myLogger.log(Logger.INFO, "Simulation " + configReader.getTitle() + " config loaded!");
+            } catch (Exception e) {
+                System.err.println("Parsing of xml configuration file error: \n" + e.getMessage());
+            }
         }
-        return null;
     }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+
     public String getTitle() {
         return title;
     }

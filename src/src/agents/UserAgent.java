@@ -1,9 +1,9 @@
 package agents;
 
+import behaviours.FIPARequestInitiatorBehaviour;
 import behaviours.WaitUserInputBehaviour;
 import jade.domain.FIPANames;
 import jade.proto.AchieveREInitiator;
-import utils.SimulationConfig;
 import jade.core.*;
 import jade.core.behaviours.*;
 import jade.domain.DFService;
@@ -21,10 +21,10 @@ import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 
-public class UserAgent extends Agent {
+
+public class UserAgent extends FIPARequestAgent {
     private String CONFIG_FILE_PATH = "src/config/";
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
-    private SimulationConfig simulationConfig;
 
     protected void setup() {
         // Registration with the DF
@@ -51,12 +51,14 @@ public class UserAgent extends Agent {
     protected void takeDown() {
         //DF unregistration
         //Close any open/required resources
+        try {
+            DFService.deregister(this);
+        } catch(FIPAException e) {
+            e.printStackTrace();
+        }
+        super.takeDown();
     }
 
-    private void processActionResponse(ACLMessage response) {
-//        To-Do: Process response from training and prediction separately... when state is idle enable user interaction
-//        again
-    }
 
     private void createManagerAgent() {
         // Dynamic creation of the Manager Agent
@@ -100,5 +102,30 @@ public class UserAgent extends Agent {
             return "";
         }
         return action;
+    }
+
+    public void startProcess(ACLMessage msg) {
+        addBehaviour(new FIPARequestInitiatorBehaviour(this, msg));;
+    }
+
+    public void agreed() {
+        System.out.println("USER - AGREED");
+
+    }
+
+    public void refused() {
+
+        System.out.println("USER - REFUSED");
+
+    }
+
+    public void resultDone() {
+
+        System.out.println("USER - INFORM");
+    }
+
+    public void failed() {
+
+        System.out.println("USER - FAILED");
     }
 }

@@ -1,6 +1,10 @@
 package agents;
 
+import behaviours.FIPARequestInitiatorBehaviour;
+import behaviours.FIPARequestResponderBehaviour;
 import behaviours.WaitMSGAndActBehaviour;
+import jade.domain.FIPANames;
+import jade.lang.acl.MessageTemplate;
 import utils.Transformer;
 import jade.core.*;
 import jade.core.behaviours.*;
@@ -17,11 +21,9 @@ import weka.core.Instances;
 import java.util.*;
 import java.io.*;
 
-public class ClassifierAgent extends Agent {
+public class ClassifierAgent extends FIPARequestAgent {
     private Classifier myClassifier = null;
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
-
-
 
 
     protected void setup() {
@@ -35,11 +37,24 @@ public class ClassifierAgent extends Agent {
         dfd.addServices(sd);
         try {
             DFService.register(this,dfd);
-            WaitMSGAndActBehaviour PingBehaviour = new WaitMSGAndActBehaviour(this, myLogger, myClassifier);
-            addBehaviour(PingBehaviour);
+            MessageTemplate template = MessageTemplate.and(
+                    MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST),
+                    MessageTemplate.MatchPerformative(ACLMessage.REQUEST) );
+            addBehaviour(new FIPARequestResponderBehaviour(this, template));
         } catch (FIPAException e) {
             myLogger.log(Logger.SEVERE, "[" + getLocalName() + "] - Cannot register with DF", e);
             doDelete();
         }
     }
+
+    @Override
+    public boolean checkAction(ACLMessage msg) {
+        return false;
+    }
+
+    @Override
+    public boolean performAction(ACLMessage msg) {
+        return true;
+    }
+
 }

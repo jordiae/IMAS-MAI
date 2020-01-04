@@ -1,5 +1,6 @@
-package src;
+package agents;
 
+import utils.Transformer;
 import jade.core.*;
 import jade.core.behaviours.*;
 import jade.lang.acl.ACLMessage;
@@ -68,11 +69,12 @@ public class ClassifierAgent extends Agent {
                             msg_cont.setContent("done");
                             send(msg_cont);
                         } catch (Exception e) {
-                            myLogger.log(Logger.INFO, "[" + getLocalName() + "] - Received badly formatted Instances ["+content+"] received from "+msg.getSender().getLocalName());
+                            myLogger.log(Logger.INFO, "[" + getLocalName() + "] - Received badly formatted Instances [" + content + "] received from " + msg.getSender().getLocalName());
                             ACLMessage msg_cont = new ACLMessage(ACLMessage.FAILURE);
                             msg_cont.setConversationId(conversationId);
                             msg_cont.addReceiver(manager_ID);
                             send(msg_cont);
+                        }
                     } else {
                         reply.setPerformative(ACLMessage.INFORM);
                         reply.setContent("agree");

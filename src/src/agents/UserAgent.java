@@ -1,5 +1,8 @@
-package src;
+package agents;
 
+import jade.domain.FIPANames;
+import jade.proto.AchieveREInitiator;
+import utils.SimulationConfig;
 import jade.core.*;
 import jade.core.behaviours.*;
 import jade.domain.DFService;
@@ -38,8 +41,11 @@ public class UserAgent extends Agent {
             if (words.length == 2){
                 configFile = words[1];
             }
+
             // Create message
             ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+            msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
+            msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
             msg.setContent(action);
             if (action.equals("T")) {
                 // Load the simulation parameters
@@ -51,7 +57,6 @@ public class UserAgent extends Agent {
                     e.printStackTrace();
                 }
             }
-            msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
             send(msg);
 
             // Await confirmation from action performed

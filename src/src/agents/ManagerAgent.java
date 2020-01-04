@@ -1,5 +1,7 @@
-package src;
+package agents;
 //~ package examples.Manager;
+import utils.SimulationConfig;
+import utils.Transformer;
 import jade.core.*;
 import jade.core.AID;
 import jade.core.behaviours.*;

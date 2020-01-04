@@ -1,4 +1,4 @@
-package src;
+package utils;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -19,7 +19,7 @@ public class SimulationConfig implements Serializable {
     private String classifierInstances;
     private String file;
 
-    static SimulationConfig fromXML(String file_path) {
+    public static SimulationConfig fromXML(String file_path) {
         SimulationConfig simulationConfig = new SimulationConfig();
         File xmlFile = new File(file_path);
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();

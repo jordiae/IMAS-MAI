@@ -1,5 +1,6 @@
 package agents;
 
+import behaviours.WaitUserInputBehaviour;
 import jade.domain.FIPANames;
 import jade.proto.AchieveREInitiator;
 import utils.SimulationConfig;
@@ -25,46 +26,6 @@ public class UserAgent extends Agent {
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
     private SimulationConfig simulationConfig;
 
-    private class WaitUserInputBehaviour extends CyclicBehaviour {
-
-        public WaitUserInputBehaviour(Agent a) {
-            super(a);
-        }
-
-        public void action() {
-            String user_input = readUserInput();
-            String[] words = user_input.split(" ");
-
-            String configFile = "imas.settings";
-
-            String action = words[0];
-            if (words.length == 2){
-                configFile = words[1];
-            }
-
-            // Create message
-            ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-            msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
-            msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-            msg.setContent(action);
-            if (action.equals("T")) {
-                // Load the simulation parameters
-                simulationConfig = SimulationConfig.fromXML(CONFIG_FILE_PATH + "/" + configFile);
-                // Add Serializable object to message
-                try {
-                    msg.setContentObject(simulationConfig);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            send(msg);
-
-            // Await confirmation from action performed
-//            ACLMessage response = myAgent.receive();  // Wait for message
-//            processActionResponse(response);
-        }
-    }
-
     protected void setup() {
         // Registration with the DF
         DFAgentDescription dfd = new DFAgentDescription();
@@ -75,15 +36,29 @@ public class UserAgent extends Agent {
         dfd.setName(getAID());
         dfd.addServices(sd);
 
+        createManagerAgent();
+
         try {
             DFService.register(this,dfd);
-            WaitUserInputBehaviour UserBehaviour = new  WaitUserInputBehaviour(this);
-            addBehaviour(UserBehaviour);
+            WaitUserInputBehaviour behaviour = new  WaitUserInputBehaviour(this);
+            addBehaviour(behaviour);
         } catch (FIPAException e) {
             myLogger.log(Logger.SEVERE, "Agent "+getLocalName()+" - Cannot register with DF", e);
             doDelete();
         }
+    }
 
+    protected void takeDown() {
+        //DF unregistration
+        //Close any open/required resources
+    }
+
+    private void processActionResponse(ACLMessage response) {
+//        To-Do: Process response from training and prediction separately... when state is idle enable user interaction
+//        again
+    }
+
+    private void createManagerAgent() {
         // Dynamic creation of the Manager Agent
         ContainerController cc = getContainerController();
         try {
@@ -100,17 +75,7 @@ public class UserAgent extends Agent {
         }
     }
 
-    protected void takeDown() {
-        //DF unregistration
-        //Close any open/required resources
-    }
-
-    private void processActionResponse(ACLMessage response) {
-//        To-Do: Process response from training and prediction separately... when state is idle enable user interaction
-//        again
-    }
-
-    private String readUserInput() {
+    public String readUserInput() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         boolean validAction = false;
         String instructions = "\n\n****** Please input one of the following action request *************\n" +
@@ -135,6 +100,5 @@ public class UserAgent extends Agent {
             return "";
         }
         return action;
-
     }
 }

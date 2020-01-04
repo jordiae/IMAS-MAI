@@ -1,7 +1,6 @@
 package agents;
 //~ package examples.Manager;
-import behaviours.FIPARequestInitiatorBehaviour;
-import behaviours.FIPARequestResponderBehaviour;
+import behaviours.FIPAProtocolBehaviour;
 import jade.domain.FIPANames;
 import jade.lang.acl.MessageTemplate;
 import jade.wrapper.StaleProxyException;
@@ -44,6 +43,10 @@ public class ManagerAgent extends FIPARequestAgent {
 
     private int classifiersAgreed = 0;
 
+    private FIPAProtocolBehaviour fipaBehaviour;
+
+    private boolean correctState = true;
+
     // setup
     protected void setup() {
         // Registration with the DF
@@ -56,10 +59,8 @@ public class ManagerAgent extends FIPARequestAgent {
         dfd.addServices(sd);
         try {
             DFService.register(this,dfd);
-            MessageTemplate template = MessageTemplate.and(
-                    MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST),
-                    MessageTemplate.MatchPerformative(ACLMessage.REQUEST) );
-            addBehaviour(new FIPARequestResponderBehaviour(this, template));
+            fipaBehaviour = new FIPAProtocolBehaviour(this);
+            addBehaviour(fipaBehaviour);
         } catch (FIPAException e) {
             myLogger.log(Logger.SEVERE, "[" + getLocalName() + "] - Cannot register with DF", e);
             doDelete();
@@ -115,25 +116,27 @@ public class ManagerAgent extends FIPARequestAgent {
                 msg_to_classifiers.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
                 msg_to_classifiers.setContent("T_" + classifierInstances[i]);
 
-                addBehaviour(new FIPARequestInitiatorBehaviour(this, msg_to_classifiers));
+                send(msg_to_classifiers);
             }
         }
 
         else if (msg.getContent().equals("P")) {
 
         }
-        return true;
+        return correctState;
+    }
+
+    public boolean waitAllResponses() {
+        return classifiersAgreed == desiredNumClassifiers;
     }
 
     public void agreed() {
         ++classifiersAgreed;
-        if (classifiersAgreed == desiredNumClassifiers) {
-            //cancelTimeout();
-        }
+        System.out.println("AGREED");
     }
 
     public void refused() {
-
+        System.out.println("REFUSED");
     }
 
     public void resultDone() {
@@ -141,6 +144,7 @@ public class ManagerAgent extends FIPARequestAgent {
     }
 
     public void failed() {
+        correctState = false;
         System.out.println("FAILED");
     }
 

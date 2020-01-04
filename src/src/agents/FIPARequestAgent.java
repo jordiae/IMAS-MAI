@@ -14,9 +14,13 @@ public class FIPARequestAgent extends Agent{
     public void resultDone() {}
     public void failed() {}
     public boolean checkAction(ACLMessage msg) throws UnreadableException, IOException {
-        return false;
+        return true;
     }
     public boolean performAction(ACLMessage msg) throws UnreadableException, IOException, StaleProxyException {
-        return false;
+        return true;
+    }
+
+    public boolean waitAllResponses() {
+        return true;
     }
 }

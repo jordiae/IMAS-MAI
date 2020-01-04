@@ -1,7 +1,6 @@
 package agents;
 
-import behaviours.FIPARequestInitiatorBehaviour;
-import behaviours.FIPARequestResponderBehaviour;
+import behaviours.FIPAProtocolBehaviour;
 import behaviours.WaitMSGAndActBehaviour;
 import jade.domain.FIPANames;
 import jade.lang.acl.MessageTemplate;
@@ -36,11 +35,8 @@ public class ClassifierAgent extends FIPARequestAgent {
         dfd.setName(getAID());
         dfd.addServices(sd);
         try {
-            DFService.register(this,dfd);
-            MessageTemplate template = MessageTemplate.and(
-                    MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST),
-                    MessageTemplate.MatchPerformative(ACLMessage.REQUEST) );
-            addBehaviour(new FIPARequestResponderBehaviour(this, template));
+            DFService.register(this, dfd);
+            addBehaviour(new FIPAProtocolBehaviour(this));
         } catch (FIPAException e) {
             myLogger.log(Logger.SEVERE, "[" + getLocalName() + "] - Cannot register with DF", e);
             doDelete();
@@ -49,7 +45,7 @@ public class ClassifierAgent extends FIPARequestAgent {
 
     @Override
     public boolean checkAction(ACLMessage msg) {
-        return false;
+        return true;
     }
 
     @Override

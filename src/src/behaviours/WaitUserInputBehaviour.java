@@ -13,7 +13,7 @@ import utils.Config;
 
 import java.io.IOException;
 
-public class WaitUserInputBehaviour extends CyclicBehaviour {
+public class WaitUserInputBehaviour extends FIPAProtocolBehaviour {
     private UserAgent agent;
     private String CONFIG_FILE_PATH = "src/config/";
     private Config config;
@@ -49,6 +49,5 @@ public class WaitUserInputBehaviour extends CyclicBehaviour {
         }
 
         agent.startProcess(msg);
-        block();
     }
 }

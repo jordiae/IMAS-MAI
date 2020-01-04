@@ -1,6 +1,5 @@
 package agents;
 
-import behaviours.FIPARequestInitiatorBehaviour;
 import behaviours.WaitUserInputBehaviour;
 import jade.domain.FIPANames;
 import jade.proto.AchieveREInitiator;
@@ -105,12 +104,12 @@ public class UserAgent extends FIPARequestAgent {
     }
 
     public void startProcess(ACLMessage msg) {
-        addBehaviour(new FIPARequestInitiatorBehaviour(this, msg));;
+        send(msg);
     }
 
     public void agreed() {
         System.out.println("USER - AGREED");
-
+        blockingReceive();
     }
 
     public void refused() {

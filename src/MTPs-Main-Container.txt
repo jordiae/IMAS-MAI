@@ -1,1 +1,1 @@
-http://DESKTOP-3PBHNP7:7778/acc
+http://10.192.84.91:7778/acc

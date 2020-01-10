@@ -1,8 +1,7 @@
 package agents;
-//~ package examples.Manager;
-import behaviours.FIPAProtocolBehaviour;
+import behaviours.ManagerBehaviour;
+import jade.core.Agent;
 import jade.domain.FIPANames;
-import jade.lang.acl.MessageTemplate;
 import jade.wrapper.StaleProxyException;
 import utils.Config;
 import utils.Transformer;
@@ -22,30 +21,20 @@ import weka.core.converters.ArffLoader.ArffReader;
 import java.io.*;
 import java.util.Arrays;
 
-enum State {
-    IDLE,
-    TRAINING,
-    TRAINED,
-    PREDICTING,
-}
 
-public class ManagerAgent extends FIPARequestAgent {
+
+public class ManagerAgent extends Agent {
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
-    private State state = State.IDLE;
     private Instances data;
+    private String testData;
     private int numTestInstances;
     private int desiredNumClassifiers;
     private int actualNumClassifiers = 0;
     private int[] classifiersTrainInstances;
     private String[] classifierInstances;
     private String nameDatafile;
+    private String algorithm;
     private Config config;  // Class holding the simulation parameters
-
-    private int classifiersAgreed = 0;
-
-    private FIPAProtocolBehaviour fipaBehaviour;
-
-    private boolean correctState = true;
 
     // setup
     protected void setup() {
@@ -59,22 +48,21 @@ public class ManagerAgent extends FIPARequestAgent {
         dfd.addServices(sd);
         try {
             DFService.register(this,dfd);
-            fipaBehaviour = new FIPAProtocolBehaviour(this);
-            addBehaviour(fipaBehaviour);
+            addBehaviour(new ManagerBehaviour(this));
         } catch (FIPAException e) {
             myLogger.log(Logger.SEVERE, "[" + getLocalName() + "] - Cannot register with DF", e);
             doDelete();
         }
     }
 
-    public boolean checkAction(ACLMessage msg) throws UnreadableException, IOException {
-        config = (Config) msg.getContentObject();
+    public boolean checkAction(Config config) throws UnreadableException, IOException {
         if (config.getAction().equals("T")) {
             desiredNumClassifiers = Integer.parseInt(config.getClassifiers());
             classifiersTrainInstances = Arrays.stream(
                     config.getTrainingSettings().split(",")).mapToInt(Integer::parseInt).toArray();
             numTestInstances = Integer.parseInt(config.getClassifierInstances());
             nameDatafile = "src/data/" + config.getFile();
+            algorithm = config.getAlgorithm();
 
             // load the arff file and separate the instances for the classifiers and for the test phase
             BufferedReader reader = new BufferedReader(new FileReader(nameDatafile));
@@ -84,17 +72,19 @@ public class ManagerAgent extends FIPARequestAgent {
             classifierInstances = new String[desiredNumClassifiers];
 
             // convert the instances to strings using the Transformer class
+            data.randomize(new java.util.Random(0));
+            testData = Transformer.toString(new Instances(data, 0, numTestInstances));
+            data = new Instances(data, numTestInstances, data.size());
             for(int i = 0; i < desiredNumClassifiers; i++){
                 data.randomize(new java.util.Random(0));
                 classifierInstances[i] = Transformer.toString(new Instances(data, 0, classifiersTrainInstances[i]));
             }
         }
-        return true;
+        return false;
     }
 
-    public boolean performAction(ACLMessage msg) throws UnreadableException, IOException, StaleProxyException {
-        config = (Config) msg.getContentObject();
-        if (config.getAction().equals("T")) {
+    public ACLMessage[] performAction(String action) throws UnreadableException, IOException, StaleProxyException {
+        if (action.equals("T")) {
             if (desiredNumClassifiers > actualNumClassifiers) {
                 ContainerController ManagerController = getContainerController();
                 for(int i = actualNumClassifiers; i < desiredNumClassifiers; i++){
@@ -107,47 +97,31 @@ public class ManagerAgent extends FIPARequestAgent {
                 actualNumClassifiers = desiredNumClassifiers;
             }
 
-            classifiersAgreed = 0;
-            state = State.TRAINING;
+            ACLMessage[] messagesToClassifiers = new ACLMessage[desiredNumClassifiers];
             for(int i = 0; i < desiredNumClassifiers; i++) {
                 ACLMessage msg_to_classifiers = new ACLMessage(ACLMessage.REQUEST);
                 AID a = new AID("Classifier"+i, false);
                 msg_to_classifiers.addReceiver(a);
                 msg_to_classifiers.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-                msg_to_classifiers.setContent("T_" + classifierInstances[i]);
-
-                send(msg_to_classifiers);
+                msg_to_classifiers.setContent("T_" + algorithm + "_" + classifierInstances[i]);
+                messagesToClassifiers[i] = msg_to_classifiers;
             }
+            return messagesToClassifiers;
         }
 
-        else if (msg.getContent().equals("P")) {
-
+        else if (action.equals("P")) {
+            ACLMessage[] messagesToClassifiers = new ACLMessage[desiredNumClassifiers];
+            for(int i = 0; i < desiredNumClassifiers; i++) {
+                ACLMessage msg_to_classifiers = new ACLMessage(ACLMessage.REQUEST);
+                AID a = new AID("Classifier"+i, false);
+                msg_to_classifiers.addReceiver(a);
+                msg_to_classifiers.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+                msg_to_classifiers.setContent("P_" + testData);
+                messagesToClassifiers[i] = msg_to_classifiers;
+            }
+            return messagesToClassifiers;
         }
-        return correctState;
+        return null;
     }
-
-    public boolean waitAllResponses() {
-        return classifiersAgreed == desiredNumClassifiers;
-    }
-
-    public void agreed() {
-        ++classifiersAgreed;
-        System.out.println("AGREED");
-    }
-
-    public void refused() {
-        System.out.println("REFUSED");
-    }
-
-    public void resultDone() {
-        System.out.println("INFORM");
-    }
-
-    public void failed() {
-        correctState = false;
-        System.out.println("FAILED");
-    }
-
-
 }
 

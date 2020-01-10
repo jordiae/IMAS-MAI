@@ -1,5 +1,7 @@
+/*
 package behaviours;
 
+import agents.FIPARequestAgent;
 import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
@@ -18,26 +20,26 @@ import java.util.Collection;
 
 
 public class WaitMSGAndActBehaviour extends CyclicBehaviour {
-    private Logger myLogger;
-    private Classifier myClassifier;
+    private FIPARequestAgent agent;
 
-    public WaitMSGAndActBehaviour(Agent a, Logger myLogger, Classifier myClassifier) {
+    public WaitMSGAndActBehaviour(FIPARequestAgent a) {
         super(a);
-        this.myLogger = myLogger;
-        this.myClassifier = myClassifier;
+        agent = a;
     }
 
     public void action() {
-        ACLMessage msg = myAgent.receive(); // Wait for message
+        ACLMessage msg = agent.receive(); // Wait for message
         if(msg != null){
             ACLMessage reply = msg.createReply();
 
             if(msg.getPerformative()== ACLMessage.REQUEST){
+                if
                 String content = msg.getContent();
                 AID manager_ID = msg.getSender();
                 String conversationId = msg.getConversationId();
 
-                    /*
+                    */
+/*
                         Content is
                             T_(serialized instances object)
                         or
@@ -49,7 +51,8 @@ public class WaitMSGAndActBehaviour extends CyclicBehaviour {
                             (test): Inform: agree
                                 then: Inform: results
                                   OR:  Failure
-                     */
+                     *//*
+
                 if ((content == null) || ((content.charAt(0) != 'T') && (content.charAt(0) != 'P')) || (content.charAt(1) != '_')) {
                     myLogger.log(Logger.INFO, "[" + myAgent.getLocalName() + "] - Received badly formatted request header: ["+content+"] received from "+msg.getSender().getLocalName());
                     reply.setPerformative(ACLMessage.REFUSE);
@@ -117,3 +120,4 @@ public class WaitMSGAndActBehaviour extends CyclicBehaviour {
         }
     }
 }
+*/

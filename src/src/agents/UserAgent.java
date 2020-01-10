@@ -1,16 +1,13 @@
 package agents;
 
-import behaviours.WaitUserInputBehaviour;
-import jade.domain.FIPANames;
-import jade.proto.AchieveREInitiator;
-import jade.core.*;
-import jade.core.behaviours.*;
+import behaviours.ManagerBehaviour;
+import behaviours.UserBehaviour;
+import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 
 import jade.util.Logger;
@@ -21,7 +18,7 @@ import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 
 
-public class UserAgent extends FIPARequestAgent {
+public class UserAgent extends Agent {
     private String CONFIG_FILE_PATH = "src/config/";
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
 
@@ -39,7 +36,7 @@ public class UserAgent extends FIPARequestAgent {
 
         try {
             DFService.register(this,dfd);
-            WaitUserInputBehaviour behaviour = new  WaitUserInputBehaviour(this);
+            UserBehaviour behaviour = new UserBehaviour(this);
             addBehaviour(behaviour);
         } catch (FIPAException e) {
             myLogger.log(Logger.SEVERE, "Agent "+getLocalName()+" - Cannot register with DF", e);
@@ -101,30 +98,5 @@ public class UserAgent extends FIPARequestAgent {
             return "";
         }
         return action;
-    }
-
-    public void startProcess(ACLMessage msg) {
-        send(msg);
-    }
-
-    public void agreed() {
-        System.out.println("USER - AGREED");
-        blockingReceive();
-    }
-
-    public void refused() {
-
-        System.out.println("USER - REFUSED");
-
-    }
-
-    public void resultDone() {
-
-        System.out.println("USER - INFORM");
-    }
-
-    public void failed() {
-
-        System.out.println("USER - FAILED");
     }
 }

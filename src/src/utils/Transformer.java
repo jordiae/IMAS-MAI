@@ -21,5 +21,4 @@ public class Transformer {
         oos.close();
         return Base64.getEncoder().encodeToString(baos.toByteArray());
     }
-
 }

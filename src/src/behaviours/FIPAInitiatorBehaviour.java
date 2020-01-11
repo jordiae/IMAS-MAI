@@ -28,8 +28,9 @@ public class FIPAInitiatorBehaviour extends CyclicBehaviour {
     public void action() {
         switch(state) {
             case IDLE:
-                Config config = myAgent.getConfig();
-                if (config != null) {
+
+                if (myAgent.isActionPending()) {
+                    Config config = myAgent.getConfig();
                     // Create message
                     ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
                     msg.addReceiver(new AID("manager", AID.ISLOCALNAME));

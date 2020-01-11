@@ -7,7 +7,6 @@ import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
-import jade.lang.acl.ACLMessage;
 import jade.util.Logger;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
@@ -23,6 +22,7 @@ public class UserAgent extends Agent {
     private String CONFIG_FILE_PATH = "src/config/";
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
     private Config config = null;
+    private boolean actionPending = false;
 
     protected void setup() {
         // Registration with the DF
@@ -103,6 +103,7 @@ public class UserAgent extends Agent {
     }
 
     public void startAction(Config config) {
+        actionPending = true;
         this.config = config;
     }
 
@@ -111,7 +112,11 @@ public class UserAgent extends Agent {
     }
 
     public void finished() {
-        config = null;
+        actionPending = false;
+    }
+
+    public boolean isActionPending() {
+        return actionPending;
     }
 
     public void receivedAgree() {

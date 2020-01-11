@@ -15,7 +15,6 @@ import utils.Config;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.Serializable;
 
 
 public class UserAgent extends Agent {
@@ -111,7 +110,7 @@ public class UserAgent extends Agent {
         return config;
     }
 
-    public void finished() {
+    public void actionFinished() {
         actionPending = false;
     }
 
@@ -133,8 +132,8 @@ public class UserAgent extends Agent {
         myLogger.log(Logger.WARNING, info);
     }
 
-    public void receivedInform(Serializable result) {
+    public void receivedInform(String result) {
         myLogger.log(Logger.INFO, "User - Received Inform");
-        myLogger.log(Logger.INFO, result.toString());
+        myLogger.log(Logger.INFO, result);
     }
 }

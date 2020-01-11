@@ -7,6 +7,8 @@ import jade.wrapper.StaleProxyException;
 import utils.Config;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
 
 enum ManagerState {
     IDLE,
@@ -21,8 +23,9 @@ public class ManagerBehaviour extends CyclicBehaviour {
     private ManagerState state = ManagerState.IDLE;
     private int numResponders = 0;
     private int numResults = 0;
-
+    private ArrayList<Serializable> results;
     private ACLMessage requestMsg;
+    private String finalResult;
 
     public ManagerBehaviour (ManagerAgent a) {
         super(a);
@@ -40,6 +43,7 @@ public class ManagerBehaviour extends CyclicBehaviour {
                         if (msg.getPerformative() == ACLMessage.REQUEST) {
                             System.out.println("Manager - Received REQUEST");
                             requestMsg = msg;
+                            results = new ArrayList<>(0);
                             Config config = (Config) msg.getContentObject();
 							String error = myAgent.checkAction(config);
                             if (error.equals("")) {
@@ -97,9 +101,14 @@ public class ManagerBehaviour extends CyclicBehaviour {
                     if (msg.getPerformative() == ACLMessage.INFORM) {
                         System.out.println("Manager - Received INFORM");
                         --numResults;
+                        try {
+                            results.add(msg.getContentObject());
+                        } catch (UnreadableException e) {
+                            e.printStackTrace();
+                        }
                         if (numResults == 0) {
                             state = ManagerState.SUCCESS;
-                            // VOTING
+                            finalResult = myAgent.treatResults(results);
                         }
                     } else if (msg.getPerformative() == ACLMessage.FAILURE) {
                         System.out.println("Manager - Received FAILURE");
@@ -114,6 +123,7 @@ public class ManagerBehaviour extends CyclicBehaviour {
             case FAILED:
                 ACLMessage resultFailed = requestMsg.createReply();
                 resultFailed.setPerformative(ACLMessage.FAILURE);
+                resultFailed.setContent(finalResult);
                 myAgent.send(resultFailed);
                 System.out.println("Manager - Sent FAILURE");
                 state = ManagerState.IDLE;
@@ -122,6 +132,7 @@ public class ManagerBehaviour extends CyclicBehaviour {
             case SUCCESS:
                 ACLMessage resultSuccess = requestMsg.createReply();
                 resultSuccess.setPerformative(ACLMessage.INFORM);
+                resultSuccess.setContent(finalResult);
                 myAgent.send(resultSuccess);
                 System.out.println("Manager - Sent INFORM");
                 state = ManagerState.IDLE;

@@ -19,6 +19,7 @@ import weka.core.Instances;
 import weka.core.converters.ArffLoader.ArffReader;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 
@@ -34,7 +35,7 @@ public class ManagerAgent extends Agent {
     private String[] classifierInstances;
     private String nameDatafile;
     private String algorithm;
-	private Boolean READY = false;
+	private Boolean TRAINED = false;
     private Config config;  // Class holding the simulation parameters
 
     // setup
@@ -84,7 +85,7 @@ public class ManagerAgent extends Agent {
 			} catch (Exception e) {
 				return e.getMessage();
 			}
-        } else if (!(config.getAction().equals("P") && READY == true)) {
+        } else if (config.getAction().equals("P") && !TRAINED) {
 			return "Classifiers not ready";
 		}
 		return "";
@@ -128,6 +129,20 @@ public class ManagerAgent extends Agent {
             return messagesToClassifiers;
         }
         return null;
+    }
+
+    public String treatResults(ArrayList<Serializable> results) {
+        if (!TRAINED) {
+            TRAINED = true;
+            return "Classifiers have been trained";
+        }
+        else {
+            TRAINED = false;
+            // VOTING
+            // Return RESULT
+            return "Classifier 1 says: A B A, Classifier 2 says: B B A, Classifier 3 says: B A B " +
+                    "\n  Final result after voting: B B A ";
+        }
     }
 }
 

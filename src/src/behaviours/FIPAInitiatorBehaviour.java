@@ -26,44 +26,34 @@ public class FIPAInitiatorBehaviour extends CyclicBehaviour {
     }
 
     public void action() {
-        switch(state) {
-            case IDLE:
-
-                if (myAgent.isActionPending()) {
-                    Config config = myAgent.getConfig();
-                    // Create message
-                    ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-                    msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
-                    msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-                    // Add Serializable object to message
-                    try {
-                        msg.setContentObject(config);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    state = InitiatorState.WAITING;
-                    myAgent.send(msg);
+        if (state == InitiatorState.IDLE) {
+            if (myAgent.isActionPending()) {
+                Config config = myAgent.getConfig();
+                // Create message
+                ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+                msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
+                msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+                // Add Serializable object to message
+                try {
+                    msg.setContentObject(config);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                break;
-            case WAITING:
-
-                break;
+                state = InitiatorState.WAITING;
+                myAgent.send(msg);
+            }
         }
         if (state == InitiatorState.WAITING) {
             ACLMessage msg = myAgent.blockingReceive();
 
             state = InitiatorState.IDLE;
-            myAgent.finished();
+            myAgent.actionFinished();
             if (msg.getPerformative() == ACLMessage.AGREE) {
                 msg = myAgent.blockingReceive();
                 myAgent.receivedAgree();
 
                 if (msg.getPerformative() == ACLMessage.INFORM) {
-                    try {
-                        myAgent.receivedInform(msg.getContentObject());
-                    } catch (UnreadableException e) {
-                        e.printStackTrace();
-                    }
+                    myAgent.receivedInform(msg.getContent());
                 } else if (msg.getPerformative() == ACLMessage.FAILURE) {
                     myAgent.receivedFailure(msg.getContent());
                 }

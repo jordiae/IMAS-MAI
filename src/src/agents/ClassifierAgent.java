@@ -81,9 +81,10 @@ public class ClassifierAgent extends Agent {
                     return new Pair<>(false, "Algorithm not supported");
                 }
                 myClassifier.buildClassifier(data);
+                return new Pair<>(true, "Classifier trained");
             }
             catch (Exception e) {
-                e.printStackTrace();
+                return new Pair<>(false, e.getMessage());
             }
         }
         else if (action.equals("P")){

@@ -31,7 +31,6 @@ public class ClassifierAgent extends Agent {
     private Instances data;
     private String algorithm;
 
-
     protected void setup() {
         // Registration with the DF
         DFAgentDescription dfd = new DFAgentDescription();
@@ -50,9 +49,9 @@ public class ClassifierAgent extends Agent {
         }
     }
 
-    public boolean checkAction(String config) throws IOException, ClassNotFoundException {
+    public String checkAction(String config) throws IOException, ClassNotFoundException {
         if ((config == null) || ((config.charAt(0) != 'T') && (config.charAt(0) != 'P')) || (config.charAt(1) != '_')) {
-            return false;
+            return "Configuration in classifier is not well defined";
         }
         else if (config.charAt(0) == 'T'){
             algorithm = config.substring(2,5);
@@ -63,7 +62,7 @@ public class ClassifierAgent extends Agent {
             String strInstances = config.substring(2);
             data = Transformer.toInst(strInstances);
         }
-        return true;
+        return "";
     }
 
     public Pair<Boolean, Object> performAction(String action) throws IOException, ClassNotFoundException {
@@ -99,9 +98,9 @@ public class ClassifierAgent extends Agent {
                 Serializable serResults = (Serializable) results;
                 return new Pair<>(true, serResults);
             } catch (Exception e) {
-                return new Pair<>(false, new String[]{e.getMessage()});
+                return new Pair<>(false, e.getMessage());
             }
         }
-        return new Pair<>(false, new String[]{"Action not supported"});
+        return new Pair<>(false, "Action not supported");
     }
 }

@@ -1,21 +1,21 @@
 package agents;
 
-import behaviours.ManagerBehaviour;
-import behaviours.UserBehaviour;
+import behaviours.FIPAInitiatorBehaviour;
+import behaviours.ReadUserInputBehaviour;
 import jade.core.Agent;
 import jade.domain.DFService;
-import jade.domain.FIPAException;
-import jade.lang.acl.ACLMessage;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
-import jade.util.Logger;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.domain.FIPAException;
+import jade.util.Logger;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
+import utils.Config;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.Serializable;
 
 
 public class UserAgent extends Agent {
@@ -35,11 +35,10 @@ public class UserAgent extends Agent {
         createManagerAgent();
 
         try {
-            DFService.register(this,dfd);
-            UserBehaviour behaviour = new UserBehaviour(this);
-            addBehaviour(behaviour);
+            DFService.register(this, dfd);
+            addBehaviour(new ReadUserInputBehaviour(this));
         } catch (FIPAException e) {
-            myLogger.log(Logger.SEVERE, "Agent "+getLocalName()+" - Cannot register with DF", e);
+            myLogger.log(Logger.SEVERE, "Agent " + getLocalName() + " - Cannot register with DF", e);
             doDelete();
         }
     }
@@ -49,12 +48,11 @@ public class UserAgent extends Agent {
         //Close any open/required resources
         try {
             DFService.deregister(this);
-        } catch(FIPAException e) {
+        } catch (FIPAException e) {
             e.printStackTrace();
         }
         super.takeDown();
     }
-
 
     private void createManagerAgent() {
         // Dynamic creation of the Manager Agent
@@ -76,14 +74,15 @@ public class UserAgent extends Agent {
     public String readUserInput() {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         boolean validAction = false;
-        String instructions = "\n\n****** Please input one of the following action request *************\n" +
-                "'T' : For simulating with the 'imas.settings' configuration file\n" +
-                "'T <config_file_name> : For simulating with another configuration file\n" +
-                "'P' : To predict with the already train models.\n\n";
+        String instructions =
+                "\n\n********** Please input one of the following action request **********\n" +
+                        "'T' : For simulating with the 'imas.settings' configuration file\n" +
+                        "'T <config_file_name> : For simulating with another configuration file\n" +
+                        "'P' : To predict with the already train models.\n\n";
         String action = "";
-        System.out.println(instructions);
+        myLogger.log(Logger.INFO, instructions);
         try {
-            while(!validAction) {
+            while (!validAction) {
                 // Read user input
                 action = reader.readLine();
                 if (action != null && (action.startsWith("T") || action.startsWith("P"))) {
@@ -98,5 +97,28 @@ public class UserAgent extends Agent {
             return "";
         }
         return action;
+    }
+
+    public void startRequest(Config config) {
+        addBehaviour(new FIPAInitiatorBehaviour(this, config));
+    }
+
+    public void receivedAgree() {
+        myLogger.log(Logger.INFO, "User - Received Agree");
+    }
+
+    public void receivedRefuse(String info) {
+        myLogger.log(Logger.WARNING, "User - Received Refuse");
+        myLogger.log(Logger.WARNING, info);
+    }
+
+    public void receivedFailure(String info) {
+        myLogger.log(Logger.WARNING, "User - Received Failure");
+        myLogger.log(Logger.WARNING, info);
+    }
+
+    public void receivedInform(Serializable result) {
+        myLogger.log(Logger.INFO, "User - Received Inform");
+        myLogger.log(Logger.INFO, result.toString());
     }
 }

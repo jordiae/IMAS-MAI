@@ -39,25 +39,28 @@ public class ClassifierBehaviour extends CyclicBehaviour {
                             System.out.println("Classifier - Received REQUEST");
                             requestMsg = msg;
                             String config = msg.getContent();
-                            if (myAgent.checkAction(config)) {
+
+                            String error = myAgent.checkAction(config);
+                            if (error.equals("")) {
                                 ACLMessage response = msg.createReply();
                                 response.setPerformative(ACLMessage.AGREE);
                                 myAgent.send(response);
                                 System.out.println("Classifier - Sent AGREE");
 
-                                Pair<Boolean, Object> result =  myAgent.performAction(config.substring(0,1));
+                                Pair<Boolean, Object> res =  myAgent.performAction(config.substring(0,1));
 
-                                if (result.getKey()) {
-                                    state=ClassifierState.SUCCESS;
-
+                                if (res.getKey()) {
+                                    state = ClassifierState.SUCCESS;
+                                    result = (Serializable) res;
                                 }
                                 else {
-                                    state=ClassifierState.FAILED;
+                                    state = ClassifierState.FAILED;
                                 }
                             }
                             else {
                                 ACLMessage response = msg.createReply();
                                 response.setPerformative(ACLMessage.REFUSE);
+                                response.setContent(error);
                                 myAgent.send(response);
                                 System.out.println("Classifier - Sent REFUSE");
                             }

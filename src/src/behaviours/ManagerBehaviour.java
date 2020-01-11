@@ -41,7 +41,8 @@ public class ManagerBehaviour extends CyclicBehaviour {
                             System.out.println("Manager - Received REQUEST");
                             requestMsg = msg;
                             Config config = (Config) msg.getContentObject();
-                            if (myAgent.checkAction(config)) {
+							String error = myAgent.checkAction(config);
+                            if (error.equals("")) {
                                 ACLMessage response = msg.createReply();
                                 response.setPerformative(ACLMessage.AGREE);
                                 myAgent.send(response);
@@ -59,6 +60,7 @@ public class ManagerBehaviour extends CyclicBehaviour {
                             else {
                                 ACLMessage response = msg.createReply();
                                 response.setPerformative(ACLMessage.REFUSE);
+								response.setContent(error);
                                 myAgent.send(response);
                                 System.out.println("Manager - Sent Refuse");
                             }

@@ -34,6 +34,7 @@ public class ManagerAgent extends Agent {
     private String[] classifierInstances;
     private String nameDatafile;
     private String algorithm;
+	private Boolean READY = false;
     private Config config;  // Class holding the simulation parameters
 
     // setup
@@ -55,32 +56,38 @@ public class ManagerAgent extends Agent {
         }
     }
 
-    public boolean checkAction(Config config) throws UnreadableException, IOException {
+    public String checkAction(Config config) throws UnreadableException, IOException {
         if (config.getAction().equals("T")) {
-            desiredNumClassifiers = Integer.parseInt(config.getClassifiers());
-            classifiersTrainInstances = Arrays.stream(
-                    config.getTrainingSettings().split(",")).mapToInt(Integer::parseInt).toArray();
-            numTestInstances = Integer.parseInt(config.getClassifierInstances());
-            nameDatafile = "src/data/" + config.getFile();
-            algorithm = config.getAlgorithm();
+			try {
+				desiredNumClassifiers = Integer.parseInt(config.getClassifiers());
+				classifiersTrainInstances = Arrays.stream(
+						config.getTrainingSettings().split(",")).mapToInt(Integer::parseInt).toArray();
+				numTestInstances = Integer.parseInt(config.getClassifierInstances());
+				nameDatafile = "src/data/" + config.getFile();
+				algorithm = config.getAlgorithm();
 
-            // load the arff file and separate the instances for the classifiers and for the test phase
-            BufferedReader reader = new BufferedReader(new FileReader(nameDatafile));
-            ArffReader arff = new ArffReader(reader);
-            data = arff.getData();
-            data.setClassIndex(data.numAttributes() - 1);
-            classifierInstances = new String[desiredNumClassifiers];
+				// load the arff file and separate the instances for the classifiers and for the test phase
+				BufferedReader reader = new BufferedReader(new FileReader(nameDatafile));
+				ArffReader arff = new ArffReader(reader);
+				data = arff.getData();
+				data.setClassIndex(data.numAttributes() - 1);
+				classifierInstances = new String[desiredNumClassifiers];
 
-            // convert the instances to strings using the Transformer class
-            data.randomize(new java.util.Random(0));
-            testData = Transformer.toString(new Instances(data, 0, numTestInstances));
-            data = new Instances(data, numTestInstances, data.size());
-            for(int i = 0; i < desiredNumClassifiers; i++){
-                data.randomize(new java.util.Random(0));
-                classifierInstances[i] = Transformer.toString(new Instances(data, 0, classifiersTrainInstances[i]));
-            }
-        }
-        return false;
+				// convert the instances to strings using the Transformer class
+				data.randomize(new java.util.Random(0));
+				testData = Transformer.toString(new Instances(data, 0, numTestInstances));
+				data = new Instances(data, numTestInstances, data.numInstances()-numTestInstances);
+				for(int i = 0; i < desiredNumClassifiers; i++){
+					data.randomize(new java.util.Random(0));
+					classifierInstances[i] = Transformer.toString(new Instances(data, 0, classifiersTrainInstances[i]));
+				}
+			} catch (Exception e) {
+				return e.getMessage();
+			}
+        } else if (!(config.getAction().equals("P") && READY == true)) {
+			return "Classifiers not ready";
+		}
+		return "";
     }
 
     public ACLMessage[] performAction(String action) throws UnreadableException, IOException, StaleProxyException {
@@ -90,7 +97,7 @@ public class ManagerAgent extends Agent {
                 for(int i = actualNumClassifiers; i < desiredNumClassifiers; i++){
                     AgentController new_agent;
                     new_agent = ManagerController.createNewAgent("Classifier" + i,
-                            this.getClass().getPackageName() + ".ClassifierAgent",
+                            this.getClass().getPackage().getName() + ".ClassifierAgent",
                             null);
                     new_agent.start();
                 }
@@ -108,7 +115,6 @@ public class ManagerAgent extends Agent {
             }
             return messagesToClassifiers;
         }
-
         else if (action.equals("P")) {
             ACLMessage[] messagesToClassifiers = new ACLMessage[desiredNumClassifiers];
             for(int i = 0; i < desiredNumClassifiers; i++) {

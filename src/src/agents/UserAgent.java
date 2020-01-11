@@ -59,7 +59,7 @@ public class UserAgent extends Agent {
         ContainerController cc = getContainerController();
         try {
             AgentController ac = cc.createNewAgent("manager",
-                    this.getClass().getPackageName() + ".ManagerAgent",
+                    this.getClass().getPackage().getName() + ".ManagerAgent",
                     null);
             try {
                 ac.start();

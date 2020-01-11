@@ -7,6 +7,7 @@ import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
+import jade.lang.acl.ACLMessage;
 import jade.util.Logger;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
@@ -21,6 +22,7 @@ import java.io.Serializable;
 public class UserAgent extends Agent {
     private String CONFIG_FILE_PATH = "src/config/";
     private Logger myLogger = Logger.getMyLogger(getClass().getName());
+    private Config config = null;
 
     protected void setup() {
         // Registration with the DF
@@ -37,6 +39,7 @@ public class UserAgent extends Agent {
         try {
             DFService.register(this, dfd);
             addBehaviour(new ReadUserInputBehaviour(this));
+            addBehaviour(new FIPAInitiatorBehaviour(this));
         } catch (FIPAException e) {
             myLogger.log(Logger.SEVERE, "Agent " + getLocalName() + " - Cannot register with DF", e);
             doDelete();
@@ -99,8 +102,16 @@ public class UserAgent extends Agent {
         return action;
     }
 
-    public void startRequest(Config config) {
-        addBehaviour(new FIPAInitiatorBehaviour(this, config));
+    public void startAction(Config config) {
+        this.config = config;
+    }
+
+    public Config getConfig() {
+        return config;
+    }
+
+    public void finished() {
+        config = null;
     }
 
     public void receivedAgree() {

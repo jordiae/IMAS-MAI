@@ -25,6 +25,6 @@ public class ReadUserInputBehaviour extends CyclicBehaviour {
         }
 
         Config config = new Config(action, CONFIG_FILE_PATH + "/" + defaultConfigFile);
-        myAgent.startRequest(config);
+        myAgent.startAction(config);
     }
 }

@@ -10,50 +10,65 @@ import utils.Config;
 
 import java.io.IOException;
 
+enum InitiatorState {
+    IDLE,
+    WAITING
+}
+
 public class FIPAInitiatorBehaviour extends CyclicBehaviour {
     private UserAgent myAgent;
+    private InitiatorState state;
 
-    public FIPAInitiatorBehaviour(UserAgent a, Config config) {
+    public FIPAInitiatorBehaviour(UserAgent a) {
         super(a);
         myAgent = a;
-
-        // Create message
-        ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-        msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
-        msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-
-        // Add Serializable object to message
-        try {
-            msg.setContentObject(config);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        myAgent.send(msg);
+        state = InitiatorState.IDLE;
     }
 
     public void action() {
-        ACLMessage msg = myAgent.blockingReceive();
-
-        if (msg.getPerformative()==ACLMessage.AGREE) {
-            msg = myAgent.blockingReceive();
-            myAgent.receivedAgree();
-
-            if (msg.getPerformative()==ACLMessage.INFORM) {
-                try {
-                    myAgent.receivedInform(msg.getContentObject());
-                } catch (UnreadableException e) {
-                    e.printStackTrace();
+        switch(state) {
+            case IDLE:
+                Config config = myAgent.getConfig();
+                if (config != null) {
+                    // Create message
+                    ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+                    msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
+                    msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+                    // Add Serializable object to message
+                    try {
+                        msg.setContentObject(config);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    state = InitiatorState.WAITING;
+                    myAgent.send(msg);
                 }
-            }
+                break;
+            case WAITING:
 
-            else if (msg.getPerformative()==ACLMessage.FAILURE) {
-                myAgent.receivedFailure(msg.getContent());
-            }
+                break;
         }
+        if (state == InitiatorState.WAITING) {
+            ACLMessage msg = myAgent.blockingReceive();
 
-        else if (msg.getPerformative()==ACLMessage.REFUSE) {
-            myAgent.receivedRefuse(msg.getContent());
+            state = InitiatorState.IDLE;
+            myAgent.finished();
+            if (msg.getPerformative() == ACLMessage.AGREE) {
+                msg = myAgent.blockingReceive();
+                myAgent.receivedAgree();
+
+                if (msg.getPerformative() == ACLMessage.INFORM) {
+                    try {
+                        myAgent.receivedInform(msg.getContentObject());
+                    } catch (UnreadableException e) {
+                        e.printStackTrace();
+                    }
+                } else if (msg.getPerformative() == ACLMessage.FAILURE) {
+                    myAgent.receivedFailure(msg.getContent());
+                }
+            } else if (msg.getPerformative() == ACLMessage.REFUSE) {
+                myAgent.receivedRefuse(msg.getContent());
+            }
         }
     }
 }

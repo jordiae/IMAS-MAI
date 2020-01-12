@@ -9,6 +9,7 @@ import utils.Config;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import javafx.util.Pair;
 
 enum ManagerState {
     IDLE,
@@ -88,6 +89,7 @@ public class ManagerBehaviour extends CyclicBehaviour {
                     }
                     else if (msg.getPerformative() == ACLMessage.REFUSE) {
                         System.out.println("Manager - Received REFUSE");
+						myAgent.setTrained(false);
                         state = ManagerState.FAILED;
                     }
                 }
@@ -107,15 +109,26 @@ public class ManagerBehaviour extends CyclicBehaviour {
                             e.printStackTrace();
                         }
                         if (numResults == 0) {
-                            state = ManagerState.SUCCESS;
-                            finalResult = myAgent.treatResults(results);
+							Pair<Boolean, String> tmp = myAgent.treatResults(results);
+							Boolean results_recieved = tmp.getKey();
+                            finalResult = tmp.getValue();	
+							if (results_recieved == true){
+								state = ManagerState.SUCCESS;
+							} else {
+								System.out.println("Manager - Incorrect Results from classifiers");
+								myAgent.setTrained(false);
+								state = ManagerState.FAILED;
+							}
                         }
                     } else if (msg.getPerformative() == ACLMessage.FAILURE) {
                         System.out.println("Manager - Received FAILURE");
+						myAgent.setTrained(false);
                         state = ManagerState.FAILED;
                     }
                 }
                 else {
+					System.out.println("Manager - Null msg received");
+					myAgent.setTrained(false);
                     state = ManagerState.FAILED;
                 }
 

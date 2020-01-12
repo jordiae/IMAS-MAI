@@ -68,6 +68,7 @@ public class ClassifierAgent extends Agent {
     public Pair<Boolean, Object> performAction(String action) throws IOException, ClassNotFoundException {
         if (action.equals("T")) {
             try {
+				Thread.sleep(10);
                 if (algorithm.equals("J48")) {
                     myClassifier = new J48();
                 }
@@ -90,11 +91,13 @@ public class ClassifierAgent extends Agent {
         else if (action.equals("P")){
             try {
                 int numInstances = data.numInstances();
-                Collection<Double> results = new ArrayList<Double>();
+				Thread.sleep(100);
+                Collection<String> results = new ArrayList<String>();
                 for (int instIdx = 0; instIdx < numInstances; instIdx++) {
                     Instance currInst = data.instance(instIdx);
-                    Double y = myClassifier.classifyInstance(currInst);
-                    results.add(y);
+                    double y = myClassifier.classifyInstance(currInst);
+					String pred = data.classAttribute().value((int) y);
+                    results.add(pred);
                 }
                 Serializable serResults = (Serializable) results;
                 return new Pair<>(true, serResults);

@@ -2,30 +2,28 @@ package behaviours;
 import agents.ClassifierAgent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
-import jade.lang.acl.UnreadableException;
-import jade.wrapper.StaleProxyException;
 import javafx.util.Pair;
 
 import java.io.IOException;
 import java.io.Serializable;
 
-enum ClassifierState {
+enum ReceiverState {
     IDLE,
     FAILED,
     SUCCESS
 }
 
 
-public class ClassifierBehaviour extends CyclicBehaviour {
+public class FIPAReceiverBehaviour extends CyclicBehaviour {
     private ClassifierAgent myAgent;
-    private ClassifierState state;
+    private ReceiverState state;
     private ACLMessage requestMsg;
     private Serializable result;
 
-    public ClassifierBehaviour (ClassifierAgent a) {
+    public FIPAReceiverBehaviour(ClassifierAgent a) {
         super(a);
         myAgent = a;
-        state = ClassifierState.IDLE;
+        state = ReceiverState.IDLE;
     }
 
     public void action() {
@@ -50,11 +48,11 @@ public class ClassifierBehaviour extends CyclicBehaviour {
                                 Pair<Boolean, Object> res =  myAgent.performAction(config.substring(0,1));
 
                                 if (res.getKey()) {
-                                    state = ClassifierState.SUCCESS;
+                                    state = ReceiverState.SUCCESS;
                                     result = (Serializable) res;
                                 }
                                 else {
-                                    state = ClassifierState.FAILED;
+                                    state = ReceiverState.FAILED;
                                 }
                             }
                             else {
@@ -76,7 +74,7 @@ public class ClassifierBehaviour extends CyclicBehaviour {
                 resultFailed.setPerformative(ACLMessage.FAILURE);
                 myAgent.send(resultFailed);
                 System.out.println("Classifier - Sent FAILED");
-                state = ClassifierState.IDLE;
+                state = ReceiverState.IDLE;
                 break;
 
             case SUCCESS:
@@ -86,7 +84,7 @@ public class ClassifierBehaviour extends CyclicBehaviour {
                     resultSuccess.setContentObject(result);
                     myAgent.send(resultSuccess);
                     System.out.println("Classifier - Sent INFORM");
-                    state = ClassifierState.IDLE;
+                    state = ReceiverState.IDLE;
                 }
                 catch (IOException e) {
                     e.printStackTrace();

@@ -11,7 +11,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import javafx.util.Pair;
 
-enum ManagerState {
+enum InitiatorReceiverState {
     IDLE,
     WAITING_RESPONSES,
     WAITING_RESULTS,
@@ -19,19 +19,19 @@ enum ManagerState {
     SUCCESS
 }
 
-public class ManagerBehaviour extends CyclicBehaviour {
+public class FIPAInitiatorReceiverBehaviour extends CyclicBehaviour {
     private ManagerAgent myAgent;
-    private ManagerState state = ManagerState.IDLE;
+    private InitiatorReceiverState state = InitiatorReceiverState.IDLE;
     private int numResponders = 0;
     private int numResults = 0;
     private ArrayList<Serializable> results;
     private ACLMessage requestMsg;
     private String finalResult;
 
-    public ManagerBehaviour (ManagerAgent a) {
+    public FIPAInitiatorReceiverBehaviour(ManagerAgent a) {
         super(a);
         myAgent = a;
-        state = ManagerState.IDLE;
+        state = InitiatorReceiverState.IDLE;
     }
 
     public void action() {
@@ -56,7 +56,7 @@ public class ManagerBehaviour extends CyclicBehaviour {
                                 ACLMessage[] messages = myAgent.performAction(config.getAction());
                                 numResponders = messages.length;
                                 numResults = messages.length;
-                                state = ManagerState.WAITING_RESPONSES;
+                                state = InitiatorReceiverState.WAITING_RESPONSES;
                                 for (ACLMessage message : messages) {
                                     myAgent.send(message);
                                     System.out.println("Manager - Sent REQUEST");
@@ -84,17 +84,17 @@ public class ManagerBehaviour extends CyclicBehaviour {
                         System.out.println("Manager - Received AGREE");
                         --numResponders;
                         if (numResponders == 0) {
-                            state = ManagerState.WAITING_RESULTS;
+                            state = InitiatorReceiverState.WAITING_RESULTS;
                         }
                     }
                     else if (msg.getPerformative() == ACLMessage.REFUSE) {
                         System.out.println("Manager - Received REFUSE");
 						myAgent.setTrained(false);
-                        state = ManagerState.FAILED;
+                        state = InitiatorReceiverState.FAILED;
                     }
                 }
                 else {
-                    state = ManagerState.FAILED;
+                    state = InitiatorReceiverState.FAILED;
                 }
                 break;
             case WAITING_RESULTS:
@@ -113,23 +113,23 @@ public class ManagerBehaviour extends CyclicBehaviour {
 							Boolean results_recieved = tmp.getKey();
                             finalResult = tmp.getValue();	
 							if (results_recieved == true){
-								state = ManagerState.SUCCESS;
+								state = InitiatorReceiverState.SUCCESS;
 							} else {
 								System.out.println("Manager - Incorrect Results from classifiers");
 								myAgent.setTrained(false);
-								state = ManagerState.FAILED;
+								state = InitiatorReceiverState.FAILED;
 							}
                         }
                     } else if (msg.getPerformative() == ACLMessage.FAILURE) {
                         System.out.println("Manager - Received FAILURE");
 						myAgent.setTrained(false);
-                        state = ManagerState.FAILED;
+                        state = InitiatorReceiverState.FAILED;
                     }
                 }
                 else {
 					System.out.println("Manager - Null msg received");
 					myAgent.setTrained(false);
-                    state = ManagerState.FAILED;
+                    state = InitiatorReceiverState.FAILED;
                 }
 
                 break;
@@ -139,7 +139,7 @@ public class ManagerBehaviour extends CyclicBehaviour {
                 resultFailed.setContent(finalResult);
                 myAgent.send(resultFailed);
                 System.out.println("Manager - Sent FAILURE");
-                state = ManagerState.IDLE;
+                state = InitiatorReceiverState.IDLE;
                 break;
 
             case SUCCESS:
@@ -148,7 +148,7 @@ public class ManagerBehaviour extends CyclicBehaviour {
                 resultSuccess.setContent(finalResult);
                 myAgent.send(resultSuccess);
                 System.out.println("Manager - Sent INFORM");
-                state = ManagerState.IDLE;
+                state = InitiatorReceiverState.IDLE;
                 break;
         }
     }

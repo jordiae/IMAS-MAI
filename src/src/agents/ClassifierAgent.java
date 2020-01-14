@@ -1,15 +1,12 @@
 package agents;
 
-import behaviours.ClassifierBehaviour;
-import jade.core.AID;
+import behaviours.FIPAReceiverBehaviour;
 import jade.core.Agent;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
-import jade.lang.acl.ACLMessage;
 import jade.util.Logger;
-import utils.Config;
 import utils.Transformer;
 import weka.classifiers.Classifier;
 import weka.classifiers.lazy.IBk;
@@ -20,7 +17,6 @@ import weka.core.Instances;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import javafx.util.Pair;
@@ -42,7 +38,7 @@ public class ClassifierAgent extends Agent {
         dfd.addServices(sd);
         try {
             DFService.register(this, dfd);
-            addBehaviour(new ClassifierBehaviour(this));
+            addBehaviour(new FIPAReceiverBehaviour(this));
         } catch (FIPAException e) {
             myLogger.log(Logger.SEVERE, "[" + getLocalName() + "] - Cannot register with DF", e);
             doDelete();

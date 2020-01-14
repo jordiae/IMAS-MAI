@@ -1,5 +1,5 @@
 package agents;
-import behaviours.ManagerBehaviour;
+import behaviours.FIPAInitiatorReceiverBehaviour;
 import jade.core.Agent;
 import jade.domain.FIPANames;
 import jade.wrapper.StaleProxyException;
@@ -54,7 +54,7 @@ public class ManagerAgent extends Agent {
         dfd.addServices(sd);
         try {
             DFService.register(this,dfd);
-            addBehaviour(new ManagerBehaviour(this));
+            addBehaviour(new FIPAInitiatorReceiverBehaviour(this));
         } catch (FIPAException e) {
             myLogger.log(Logger.SEVERE, "[" + getLocalName() + "] - Cannot register with DF", e);
             doDelete();

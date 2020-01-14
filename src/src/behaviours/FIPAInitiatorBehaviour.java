@@ -26,40 +26,40 @@ public class FIPAInitiatorBehaviour extends CyclicBehaviour {
     }
 
     public void action() {
-        if (state == InitiatorState.IDLE) {
-            if (myAgent.isActionPending()) {
-                Config config = myAgent.getConfig();
-                // Create message
-                ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
-                msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
-                msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-                // Add Serializable object to message
-                try {
-                    msg.setContentObject(config);
-                } catch (IOException e) {
-                    e.printStackTrace();
+        switch(state) {
+            case IDLE:
+                if (myAgent.isActionPending()) {
+                    Config config = myAgent.getConfig();
+                    // Create message
+                    ACLMessage msg = new ACLMessage(ACLMessage.REQUEST);
+                    msg.addReceiver(new AID("manager", AID.ISLOCALNAME));
+                    msg.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+                    // Add Serializable object to message
+                    try {
+                        msg.setContentObject(config);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    state = InitiatorState.WAITING;
+                    myAgent.send(msg);
                 }
-                state = InitiatorState.WAITING;
-                myAgent.send(msg);
-            }
-        }
-        if (state == InitiatorState.WAITING) {
-            ACLMessage msg = myAgent.blockingReceive();
+            case WAITING:
+                ACLMessage msg = myAgent.blockingReceive();
 
-            state = InitiatorState.IDLE;
-            myAgent.actionFinished();
-            if (msg.getPerformative() == ACLMessage.AGREE) {
-                msg = myAgent.blockingReceive();
-                myAgent.receivedAgree();
+                state = InitiatorState.IDLE;
+                myAgent.actionFinished();
+                if (msg.getPerformative() == ACLMessage.AGREE) {
+                    msg = myAgent.blockingReceive();
+                    myAgent.receivedAgree();
 
-                if (msg.getPerformative() == ACLMessage.INFORM) {
-                    myAgent.receivedInform(msg.getContent());
-                } else if (msg.getPerformative() == ACLMessage.FAILURE) {
-                    myAgent.receivedFailure(msg.getContent());
+                    if (msg.getPerformative() == ACLMessage.INFORM) {
+                        myAgent.receivedInform(msg.getContent());
+                    } else if (msg.getPerformative() == ACLMessage.FAILURE) {
+                        myAgent.receivedFailure(msg.getContent());
+                    }
+                } else if (msg.getPerformative() == ACLMessage.REFUSE) {
+                    myAgent.receivedRefuse(msg.getContent());
                 }
-            } else if (msg.getPerformative() == ACLMessage.REFUSE) {
-                myAgent.receivedRefuse(msg.getContent());
-            }
         }
     }
 }

@@ -75,7 +75,7 @@ public class FIPAInitiatorReceiverBehaviour extends CyclicBehaviour {
                 break;
 
             case WAITING:
-                msg = myAgent.blockingReceive();
+                msg = myAgent.blockingReceive(5000);
                 if (msg != null) {
                     if (msg.getPerformative() == ACLMessage.AGREE) {
                         ++numResponders;

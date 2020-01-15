@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<SimulationSettings>
+<title>IMAS_model_comparison_MLP</title>
+<algorithm>MLP</algorithm>
+<classifiers>8</classifiers>
+<trainingSettings>100,150,200,250,300,400,450,500</trainingSettings>
+<classifyInstances>20</classifyInstances>
+<file>segment-test.arff</file>
+</SimulationSettings>

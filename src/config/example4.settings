@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<SimulationSettings>
+<title>IMAS_large_nb_classifiers</title>
+<algorithm>J48</algorithm>
+<classifiers>50</classifiers>
+<trainingSettings>500, 501, 518, 527, 556, 570, 590, 609, 615, 632, 644, 655, 666, 673, 687, 693, 708, 714, 721, 730, 764, 819, 864, 878, 880, 905, 915, 916, 936, 971, 972, 1003, 1006, 1027, 1047, 1057, 1068, 1073, 1075, 1104, 1117, 1132, 1159, 1170, 1176, 1224, 1233, 1236, 1276, 1280</trainingSettings>
+<classifyInstances>20</classifyInstances>
+<file>segment-challenge.arff</file>
+</SimulationSettings>

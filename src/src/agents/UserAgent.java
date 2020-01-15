@@ -87,7 +87,7 @@ public class UserAgent extends Agent {
             while (!validAction) {
                 // Read user input
                 action = reader.readLine();
-                if (action != null && (action.startsWith("T") || action.startsWith("P"))) {
+                if (action != null && (action.startsWith("T") || action.equals("P"))) {
                     validAction = true;
                 } else {
                     myLogger.log(Logger.WARNING, "Wrong action" + instructions);

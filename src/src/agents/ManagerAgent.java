@@ -36,6 +36,7 @@ public class ManagerAgent extends Agent {
     private int desiredNumClassifiers;
     private int actualNumClassifiers = 0;
     private int[] classifiersTrainInstances;
+	private int sum_train_instances = 0;
     private String[] classifierInstances;
     private String nameDatafile;
     private String algorithm;
@@ -67,6 +68,8 @@ public class ManagerAgent extends Agent {
 				desiredNumClassifiers = Integer.parseInt(config.getClassifiers());
 				classifiersTrainInstances = Arrays.stream(
 						config.getTrainingSettings().split(",")).mapToInt(Integer::parseInt).toArray();
+				for (int i = 0; i < classifiersTrainInstances.length; ++i)
+					sum_train_instances += classifiersTrainInstances[i];
 				numTestInstances = Integer.parseInt(config.getClassifierInstances());
 				nameDatafile = "src/data/" + config.getFile();
 				algorithm = config.getAlgorithm();
@@ -178,16 +181,16 @@ public class ManagerAgent extends Agent {
         }
         else {
 			try {
+				int sp_ins = 10 + 2;
 				int sp_data = 0;
 				for (int i = 0; i < numTestInstances; i++) {
-					int tmp = data.instance(i).toString().length();
+					int tmp = testInstances.get(i).stringValue(testInstances.get(i).classAttribute()).length(); //data.instance(i).toString().length();
 					if (tmp > sp_data) sp_data = tmp;
 				}
-				int sp_ins = 10 + 2;
 				sp_data += 12;
-				int sp_agents = 20 + 2;
-				int sp_prec = 20 + 2;
-				int sp_final = 20 + 2;
+				int sp_agents = 15 + 2;
+				int sp_prec = 16 + 2;
+				int sp_final = 15 + 2;
 				String final_Table = " Table with the results\n"+center("Instance", sp_ins, ' ') + center("Data", sp_data, ' ');
 				for (int i = 0; i < desiredNumClassifiers; i++) {
 					final_Table += center("Agent "+Integer.toString(i), sp_agents, ' ') + 
@@ -201,19 +204,26 @@ public class ManagerAgent extends Agent {
 					ArrayList<String> instance_results = deserialized.getValue();
 					classifiers_predict.add(instance_results);
 				}
-				ArrayList<String> most_voted_classes = new ArrayList<String>();
+				int correct_voted_classes = 0;
+				ArrayList<Integer> num_of_correct = new ArrayList<Integer>();
 				for (int i = 0; i < numTestInstances; i++) { // for each instance
+					if (i == 0)
+						for (int c = 0; c < classifiers_predict.size(); c++) num_of_correct.add(0);
 					final_Table += center(Integer.toString(i), sp_ins, ' ');
 					Instance inst = testInstances.instance(i);
-					final_Table += center(inst.toString(), sp_data, ' ');
+					String y_true = inst.stringValue(inst.classAttribute());
+					final_Table += center(y_true, sp_data, ' ');
 					HashMap map = new HashMap();
 					for (int c = 0; c < classifiers_predict.size(); c++){ // for each classifier
 						String pred = classifiers_predict.get(c).get(i);
-						Float weight = (float) classifiersTrainInstances[c]/(data.size()+numTestInstances);
-						if (map.containsKey(pred) == true) map.replace(pred, (Float) map.get(pred)+weight);
+						if (pred.equals(y_true))
+							num_of_correct.set(c, num_of_correct.get(c)+1);
+						Float weight = (float) classifiersTrainInstances[c]/(sum_train_instances);
+						if (map.containsKey(pred) == true)
+							map.replace(pred, (Float) map.get(pred) + weight);
 						else map.put(pred, weight);
 						final_Table += center(pred, sp_agents, ' ') + 
-							center(String.format("%.4f", weight*100), sp_prec, ' ');
+							center(String.format("%.2f", (float) classifiersTrainInstances[c]/(data.size() + numTestInstances) *100) + " %", sp_prec, ' ');
 					}
 					HashMap.Entry<String, Float> most_voted = null;
 					for (Object o : map.entrySet()) { // for each key in the HashMap
@@ -223,8 +233,17 @@ public class ManagerAgent extends Agent {
 					
 					final_Table += center(most_voted.getKey(), sp_final, ' ');
 					final_Table += "\n";
-					most_voted_classes.add(most_voted.getKey());
+					if (most_voted.getKey().toString().equals(y_true))
+						++correct_voted_classes;
 				}
+				final_Table += center("", sp_ins+sp_data-1, ' ');
+				for (int c = 0; c < classifiers_predict.size(); c++)
+					final_Table += center("Accuracy classifier " + Integer.toString(c) + ": " +
+							String.format("%.2f", (float) 100*num_of_correct.get(c)/numTestInstances) + " %", 
+							sp_agents + sp_prec, ' ');
+				final_Table += center("Accuracy: " + 
+						 String.format("%.2f", (float) 100*correct_voted_classes/numTestInstances) + " %", sp_final-1, ' ');
+				final_Table += "\n";
 				// Return RESULT
 				return new Pair<> (true, final_Table);
 

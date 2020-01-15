@@ -64,7 +64,6 @@ public class ClassifierAgent extends Agent {
     public Pair<Boolean, Object> performAction(String action) throws IOException, ClassNotFoundException {
         if (action.equals("T")) {
             try {
-				Thread.sleep(10);
                 if (algorithm.equals("J48")) {
                     myClassifier = new J48();
                 }

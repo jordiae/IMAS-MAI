@@ -173,8 +173,7 @@ public class ManagerAgent extends Agent {
 					return new Pair<> (false, "Classifiers not correctly trained");
 				}
 			} catch (Exception e) {
-				System.out.println(e.getMessage());
-				return new Pair<> (false, "At least one classifier said: Fuck off");
+				return new Pair<> (false, "Error: Train, " + e.getMessage());
 			}
         }
         else {
@@ -230,8 +229,7 @@ public class ManagerAgent extends Agent {
 				return new Pair<> (true, final_Table);
 
 			} catch (Exception e) {
-				System.out.println(e.getMessage());
-				return new Pair<> (false, "At least one classifier said: Fuck off");
+				return new Pair<> (false, "Error in predict: " + e.getMessage());
 			}
 
         }

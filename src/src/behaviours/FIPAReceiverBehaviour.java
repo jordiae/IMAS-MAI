@@ -34,7 +34,7 @@ public class FIPAReceiverBehaviour extends CyclicBehaviour {
                 if (msg != null) {
                     try {
                         if (msg.getPerformative() == ACLMessage.REQUEST) {
-                            System.out.println("Classifier - Received REQUEST");
+//                            System.out.println("Classifier - Received REQUEST");
                             requestMsg = msg;
                             String config = msg.getContent();
 
@@ -43,7 +43,7 @@ public class FIPAReceiverBehaviour extends CyclicBehaviour {
                                 ACLMessage response = msg.createReply();
                                 response.setPerformative(ACLMessage.AGREE);
                                 myAgent.send(response);
-                                System.out.println("Classifier - Sent AGREE");
+//                                System.out.println("Classifier - Sent AGREE");
 
                                 Pair<Boolean, Object> res =  myAgent.performAction(config.substring(0,1));
 
@@ -60,7 +60,7 @@ public class FIPAReceiverBehaviour extends CyclicBehaviour {
                                 response.setPerformative(ACLMessage.REFUSE);
                                 response.setContent(error);
                                 myAgent.send(response);
-                                System.out.println("Classifier - Sent REFUSE");
+//                                System.out.println("Classifier - Sent REFUSE");
                             }
                         }
                     }
@@ -73,7 +73,7 @@ public class FIPAReceiverBehaviour extends CyclicBehaviour {
                 ACLMessage resultFailed = requestMsg.createReply();
                 resultFailed.setPerformative(ACLMessage.FAILURE);
                 myAgent.send(resultFailed);
-                System.out.println("Classifier - Sent FAILED");
+//                System.out.println("Classifier - Sent FAILED");
                 state = ReceiverState.IDLE;
                 break;
 
@@ -83,7 +83,7 @@ public class FIPAReceiverBehaviour extends CyclicBehaviour {
                     resultSuccess.setPerformative(ACLMessage.INFORM);
                     resultSuccess.setContentObject(result);
                     myAgent.send(resultSuccess);
-                    System.out.println("Classifier - Sent INFORM");
+//                    System.out.println("Classifier - Sent INFORM");
                     state = ReceiverState.IDLE;
                 }
                 catch (IOException e) {

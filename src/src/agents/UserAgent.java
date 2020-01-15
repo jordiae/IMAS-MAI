@@ -82,7 +82,7 @@ public class UserAgent extends Agent {
                         "'T <config_file_name> : For simulating with another configuration file\n" +
                         "'P' : To predict with the already train models.\n\n";
         String action = "";
-        myLogger.log(Logger.INFO, instructions);
+//        myLogger.log(Logger.INFO, instructions);
         try {
             while (!validAction) {
                 // Read user input
@@ -118,22 +118,17 @@ public class UserAgent extends Agent {
         return actionPending;
     }
 
-    public void receivedAgree() {
-        myLogger.log(Logger.INFO, "User - Received Agree");
-    }
+    public void receivedAgree() {}
 
     public void receivedRefuse(String info) {
-        myLogger.log(Logger.WARNING, "User - Received Refuse");
-        myLogger.log(Logger.WARNING, info);
+        myLogger.log(Logger.WARNING, "REFUSED \n" + info);
     }
 
     public void receivedFailure(String info) {
-        myLogger.log(Logger.WARNING, "User - Received Failure");
-        myLogger.log(Logger.WARNING, info);
+        myLogger.log(Logger.WARNING, "FAILURE\n" + info);
     }
 
     public void receivedInform(String result) {
-        myLogger.log(Logger.INFO, "User - Received Inform");
         myLogger.log(Logger.INFO, result);
     }
 }

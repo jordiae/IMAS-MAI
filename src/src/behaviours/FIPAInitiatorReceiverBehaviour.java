@@ -13,8 +13,7 @@ import javafx.util.Pair;
 
 enum InitiatorReceiverState {
     IDLE,
-    WAITING_RESPONSES,
-    WAITING_RESULTS,
+    WAITING,
     FAILED,
     SUCCESS
 }
@@ -24,6 +23,7 @@ public class FIPAInitiatorReceiverBehaviour extends CyclicBehaviour {
     private InitiatorReceiverState state = InitiatorReceiverState.IDLE;
     private int numResponders = 0;
     private int numResults = 0;
+	private int sentRequests = 0;
     private ArrayList<Serializable> results;
     private ACLMessage requestMsg;
     private String finalResult;
@@ -42,7 +42,6 @@ public class FIPAInitiatorReceiverBehaviour extends CyclicBehaviour {
                 if (msg != null) {
                     try {
                         if (msg.getPerformative() == ACLMessage.REQUEST) {
-                            System.out.println("Manager - Received REQUEST");
                             requestMsg = msg;
                             results = new ArrayList<>(0);
                             Config config = (Config) msg.getContentObject();
@@ -51,15 +50,14 @@ public class FIPAInitiatorReceiverBehaviour extends CyclicBehaviour {
                                 ACLMessage response = msg.createReply();
                                 response.setPerformative(ACLMessage.AGREE);
                                 myAgent.send(response);
-                                System.out.println("Manager - Sent AGREE");
 
                                 ACLMessage[] messages = myAgent.performAction(config.getAction());
-                                numResponders = messages.length;
-                                numResults = messages.length;
-                                state = InitiatorReceiverState.WAITING_RESPONSES;
+                                numResponders = 0;
+                                numResults = 0;
+								sentRequests = messages.length;
+                                state = InitiatorReceiverState.WAITING;
                                 for (ACLMessage message : messages) {
                                     myAgent.send(message);
-                                    System.out.println("Manager - Sent REQUEST");
                                 }
                             }
                             else {
@@ -67,7 +65,6 @@ public class FIPAInitiatorReceiverBehaviour extends CyclicBehaviour {
                                 response.setPerformative(ACLMessage.REFUSE);
 								response.setContent(error);
                                 myAgent.send(response);
-                                System.out.println("Manager - Sent Refuse");
                             }
                         }
                     }
@@ -77,68 +74,50 @@ public class FIPAInitiatorReceiverBehaviour extends CyclicBehaviour {
                 }
                 break;
 
-            case WAITING_RESPONSES:
+            case WAITING:
                 msg = myAgent.blockingReceive(3000);
                 if (msg != null) {
                     if (msg.getPerformative() == ACLMessage.AGREE) {
-                        System.out.println("Manager - Received AGREE");
-                        --numResponders;
-                        if (numResponders == 0) {
-                            state = InitiatorReceiverState.WAITING_RESULTS;
-                        }
+                        ++numResponders;
                     }
                     else if (msg.getPerformative() == ACLMessage.REFUSE) {
-                        System.out.println("Manager - Received REFUSE");
 						myAgent.setTrained(false);
                         state = InitiatorReceiverState.FAILED;
-                    }
-                }
-                else {
-                    state = InitiatorReceiverState.FAILED;
-                }
-                break;
-            case WAITING_RESULTS:
-                msg = myAgent.blockingReceive(3000);
-                if (msg != null) {
-                    if (msg.getPerformative() == ACLMessage.INFORM) {
-                        System.out.println("Manager - Received INFORM");
-                        --numResults;
+                    } 
+					else if (msg.getPerformative() == ACLMessage.INFORM) {
+                        ++numResults;
                         try {
                             results.add(msg.getContentObject());
                         } catch (UnreadableException e) {
                             e.printStackTrace();
                         }
-                        if (numResults == 0) {
+                        if (numResults == sentRequests && numResponders == sentRequests) {
 							Pair<Boolean, String> tmp = myAgent.treatResults(results);
 							Boolean results_recieved = tmp.getKey();
                             finalResult = tmp.getValue();	
 							if (results_recieved == true){
 								state = InitiatorReceiverState.SUCCESS;
 							} else {
-								System.out.println("Manager - Incorrect Results from classifiers");
 								myAgent.setTrained(false);
 								state = InitiatorReceiverState.FAILED;
 							}
                         }
-                    } else if (msg.getPerformative() == ACLMessage.FAILURE) {
-                        System.out.println("Manager - Received FAILURE");
+                    }
+					else if (msg.getPerformative() == ACLMessage.FAILURE) {
 						myAgent.setTrained(false);
                         state = InitiatorReceiverState.FAILED;
                     }
                 }
                 else {
-					System.out.println("Manager - Null msg received");
 					myAgent.setTrained(false);
                     state = InitiatorReceiverState.FAILED;
                 }
-
                 break;
             case FAILED:
                 ACLMessage resultFailed = requestMsg.createReply();
                 resultFailed.setPerformative(ACLMessage.FAILURE);
                 resultFailed.setContent(finalResult);
                 myAgent.send(resultFailed);
-                System.out.println("Manager - Sent FAILURE");
                 state = InitiatorReceiverState.IDLE;
                 break;
 
@@ -147,7 +126,7 @@ public class FIPAInitiatorReceiverBehaviour extends CyclicBehaviour {
                 resultSuccess.setPerformative(ACLMessage.INFORM);
                 resultSuccess.setContent(finalResult);
                 myAgent.send(resultSuccess);
-                System.out.println("Manager - Sent INFORM");
+//                System.out.println("Manager - Sent INFORM");
                 state = InitiatorReceiverState.IDLE;
                 break;
         }
